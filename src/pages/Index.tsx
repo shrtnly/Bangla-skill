@@ -1,0 +1,307 @@
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { 
+  BookOpen, 
+  Award, 
+  Users, 
+  TrendingUp, 
+  Star,
+  CheckCircle,
+  Zap,
+  Target,
+  Trophy,
+  ArrowRight
+} from "lucide-react";
+import { useNavigate } from "react-router-dom";
+
+const Index = () => {
+  const navigate = useNavigate();
+
+  const courses = [
+    {
+      id: 1,
+      title: "ডিজিটাল মার্কেটিং মাস্টারক্লাস",
+      category: "জনপ্রিয়",
+      badge: "trending",
+      students: 2847,
+      rating: 4.8,
+      modules: 12,
+      image: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&q=80"
+    },
+    {
+      id: 2,
+      title: "ওয়েব ডেভেলপমেন্ট সম্পূর্ণ গাইড",
+      category: "নতুন",
+      badge: "new",
+      students: 1523,
+      rating: 4.9,
+      modules: 15,
+      image: "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=800&q=80"
+    },
+    {
+      id: 3,
+      title: "গ্রাফিক্স ডিজাইন প্রফেশনাল",
+      category: "সেরা",
+      badge: "best",
+      students: 3421,
+      rating: 4.7,
+      modules: 10,
+      image: "https://images.unsplash.com/photo-1561070791-2526d30994b5?w=800&q=80"
+    },
+    {
+      id: 4,
+      title: "ডেটা সায়েন্স ফান্ডামেন্টাল",
+      category: "জনপ্রিয়",
+      badge: "trending",
+      students: 1876,
+      rating: 4.6,
+      modules: 14,
+      image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&q=80"
+    },
+  ];
+
+  const features = [
+    {
+      icon: BookOpen,
+      title: "বাংলায় শিখুন",
+      description: "সম্পূর্ণ বাংলা ভাষায় মানসম্পন্ন শিক্ষা উপকরণ"
+    },
+    {
+      icon: Award,
+      title: "সার্টিফিকেট পান",
+      description: "শিখন সম্পন্ন করে পেশাদার সার্টিফিকেট অর্জন করুন"
+    },
+    {
+      icon: Zap,
+      title: "ইন্টারেক্টিভ কুইজ",
+      description: "বাস্তব সময়ে পরীক্ষা দিয়ে দক্ষতা যাচাই করুন"
+    },
+    {
+      icon: Trophy,
+      title: "রিওয়ার্ড সিস্টেম",
+      description: "পয়েন্ট ও অর্জন দিয়ে শিক্ষার যাত্রা উপভোগ করুন"
+    },
+  ];
+
+  const stats = [
+    { value: "১০,০০০+", label: "শিক্ষার্থী" },
+    { value: "৫০+", label: "কোর্স" },
+    { value: "৮,৫০০+", label: "সার্টিফিকেট" },
+    { value: "৪.৮", label: "রেটিং" },
+  ];
+
+  return (
+    <div className="min-h-screen">
+      {/* Header */}
+      <header className="border-b bg-card/50 backdrop-blur-sm sticky top-0 z-50">
+        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-primary to-primary-glow flex items-center justify-center">
+              <BookOpen className="w-6 h-6 text-white" />
+            </div>
+            <span className="text-xl font-bold">শিক্ষা প্ল্যাটফর্ম</span>
+          </div>
+          <Button onClick={() => navigate("/auth")} className="btn-hero">
+            লগইন করুন
+          </Button>
+        </div>
+      </header>
+
+      {/* Hero Section */}
+      <section className="container mx-auto px-4 py-20 lg:py-32">
+        <div className="max-w-4xl mx-auto text-center space-y-6 animate-fade-in">
+          <Badge className="bg-accent/10 text-accent border-accent/20 hover:bg-accent/20">
+            বাংলায় সেরা শিক্ষা প্ল্যাটফর্ম
+          </Badge>
+          <h1 className="text-4xl md:text-6xl font-bold leading-tight">
+            আপনার স্বপ্নের ক্যারিয়ার
+            <span className="block mt-2 bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+              শুরু হোক এখানে
+            </span>
+          </h1>
+          <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
+            বিশ্বমানের শিক্ষা এখন বাংলায়। আপনার পছন্দের বিষয়ে দক্ষতা অর্জন করুন এবং পেশাদার সার্টিফিকেট পান।
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
+            <Button size="lg" className="btn-hero text-lg" onClick={() => navigate("/auth")}>
+              বিনামূল্যে শুরু করুন
+              <ArrowRight className="ml-2 w-5 h-5" />
+            </Button>
+            <Button size="lg" variant="outline" className="text-lg">
+              কোর্স দেখুন
+            </Button>
+          </div>
+        </div>
+      </section>
+
+      {/* Stats Section */}
+      <section className="bg-gradient-to-r from-primary to-primary-glow py-16">
+        <div className="container mx-auto px-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-white">
+            {stats.map((stat, index) => (
+              <div key={index} className="text-center animate-scale-in" style={{ animationDelay: `${index * 100}ms` }}>
+                <div className="text-3xl md:text-5xl font-bold mb-2">{stat.value}</div>
+                <div className="text-sm md:text-base opacity-90">{stat.label}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Featured Courses */}
+      <section className="container mx-auto px-4 py-20">
+        <div className="text-center mb-12">
+          <h2 className="text-3xl md:text-4xl font-bold mb-4">জনপ্রিয় কোর্সসমূহ</h2>
+          <p className="text-muted-foreground text-lg">আপনার ক্যারিয়ারের জন্য সেরা কোর্স বেছে নিন</p>
+        </div>
+
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {courses.map((course, index) => (
+            <Card 
+              key={course.id} 
+              className="overflow-hidden card-hover cursor-pointer animate-slide-up"
+              style={{ animationDelay: `${index * 100}ms` }}
+              onClick={() => navigate("/dashboard")}
+            >
+              <div className="relative h-48">
+                <img 
+                  src={course.image} 
+                  alt={course.title}
+                  className="w-full h-full object-cover"
+                />
+                <Badge 
+                  className={`absolute top-3 right-3 ${
+                    course.badge === "trending" 
+                      ? "bg-accent" 
+                      : course.badge === "new" 
+                      ? "bg-primary" 
+                      : "bg-success"
+                  }`}
+                >
+                  {course.category}
+                </Badge>
+              </div>
+              <div className="p-5 space-y-3">
+                <h3 className="font-semibold text-lg line-clamp-2">{course.title}</h3>
+                <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                  <div className="flex items-center gap-1">
+                    <Users className="w-4 h-4" />
+                    {course.students}
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Star className="w-4 h-4 fill-accent text-accent" />
+                    {course.rating}
+                  </div>
+                </div>
+                <div className="flex items-center justify-between pt-2">
+                  <span className="text-sm text-muted-foreground">{course.modules} টি মডিউল</span>
+                  <Button size="sm" variant="ghost" className="text-primary">
+                    বিস্তারিত →
+                  </Button>
+                </div>
+              </div>
+            </Card>
+          ))}
+        </div>
+      </section>
+
+      {/* Features Section */}
+      <section className="bg-secondary/50 py-20">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">কেন আমাদের বেছে নিবেন?</h2>
+            <p className="text-muted-foreground text-lg">আপনার শিক্ষার যাত্রা সহজ ও কার্যকর করতে</p>
+          </div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {features.map((feature, index) => (
+              <Card 
+                key={index} 
+                className="p-6 text-center space-y-4 card-hover animate-scale-in"
+                style={{ animationDelay: `${index * 100}ms` }}
+              >
+                <div className="w-16 h-16 mx-auto rounded-full bg-primary/10 flex items-center justify-center">
+                  <feature.icon className="w-8 h-8 text-primary" />
+                </div>
+                <h3 className="font-semibold text-lg">{feature.title}</h3>
+                <p className="text-muted-foreground text-sm">{feature.description}</p>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="container mx-auto px-4 py-20">
+        <Card className="relative overflow-hidden bg-gradient-to-r from-primary to-primary-glow p-12 md:p-16 text-center text-white">
+          <div className="relative z-10 space-y-6">
+            <h2 className="text-3xl md:text-4xl font-bold">আজই শুরু করুন আপনার শিক্ষার যাত্রা</h2>
+            <p className="text-lg opacity-90 max-w-2xl mx-auto">
+              বিনামূল্যে রেজিস্ট্রেশন করুন এবং অ্যাক্সেস পান হাজারো মানসম্পন্ন কোর্সে
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
+              <Button 
+                size="lg" 
+                className="bg-white text-primary hover:bg-white/90 text-lg font-semibold"
+                onClick={() => navigate("/auth")}
+              >
+                <CheckCircle className="mr-2 w-5 h-5" />
+                বিনামূল্যে শুরু করুন
+              </Button>
+            </div>
+          </div>
+          <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4xIj48cGF0aCBkPSJNMzYgMzRjMC0yLjIxLTEuNzktNC00LTRzLTQgMS43OS00IDQgMS43OSA0IDQgNCA0LTEuNzkgNC00em0wLTEwYzAtMi4yMS0xLjc5LTQtNC00cy00IDEuNzktNCA0IDEuNzkgNCA0IDQgNC0xLjc5IDQtNHptMC0xMGMwLTIuMjEtMS43OS00LTQtNHMtNCAxLjc5LTQgNCAxLjc5IDQgNCA0IDQtMS43OSA0LTR6Ii8+PC9nPjwvZz48L3N2Zz4=')] opacity-10"></div>
+        </Card>
+      </section>
+
+      {/* Footer */}
+      <footer className="border-t bg-card/50 py-12">
+        <div className="container mx-auto px-4">
+          <div className="grid md:grid-cols-4 gap-8">
+            <div className="space-y-4">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-primary-glow flex items-center justify-center">
+                  <BookOpen className="w-5 h-5 text-white" />
+                </div>
+                <span className="font-bold">শিক্ষা প্ল্যাটফর্ম</span>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                বাংলায় সেরা অনলাইন শিক্ষা প্ল্যাটফর্ম
+              </p>
+            </div>
+            <div>
+              <h4 className="font-semibold mb-4">সম্পর্কে</h4>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                <li>আমাদের সম্পর্কে</li>
+                <li>যোগাযোগ</li>
+                <li>ক্যারিয়ার</li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-semibold mb-4">সহায়তা</h4>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                <li>হেল্প সেন্টার</li>
+                <li>শর্তাবলী</li>
+                <li>গোপনীয়তা</li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-semibold mb-4">সোশ্যাল</h4>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                <li>ফেসবুক</li>
+                <li>ইউটিউব</li>
+                <li>লিংকডইন</li>
+              </ul>
+            </div>
+          </div>
+          <div className="border-t mt-8 pt-8 text-center text-sm text-muted-foreground">
+            <p>© ২০২৫ শিক্ষা প্ল্যাটফর্ম। সর্বস্বত্ব সংরক্ষিত।</p>
+          </div>
+        </div>
+      </footer>
+    </div>
+  );
+};
+
+export default Index;
