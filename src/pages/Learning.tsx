@@ -28,8 +28,11 @@ const Learning = () => {
   const [loading, setLoading] = useState(true);
   const [enrollments, setEnrollments] = useState<any[]>([]);
   const [selectedCourseId, setSelectedCourseId] = useState<string | null>(null);
+  const [selectedModuleId, setSelectedModuleId] = useState<string | null>(null);
   const [modules, setModules] = useState<any[]>([]);
   const [moduleProgress, setModuleProgress] = useState<any[]>([]);
+  const [chapters, setChapters] = useState<any[]>([]);
+  const [chapterProgress, setChapterProgress] = useState<any[]>([]);
 
   useEffect(() => {
     if (user) {
@@ -42,6 +45,12 @@ const Learning = () => {
       fetchModules(selectedCourseId);
     }
   }, [selectedCourseId]);
+
+  useEffect(() => {
+    if (selectedModuleId) {
+      fetchChapters(selectedModuleId);
+    }
+  }, [selectedModuleId]);
 
   const fetchEnrollments = async () => {
     try {
@@ -90,6 +99,17 @@ const Learning = () => {
 
         if (progressError) throw progressError;
         setModuleProgress(progressData || []);
+
+        const inProgressModule = modulesData?.find(m => {
+          const progress = progressData?.find(p => p.module_id === m.id);
+          return progress && !progress.quiz_passed;
+        });
+
+        if (inProgressModule) {
+          setSelectedModuleId(inProgressModule.id);
+        } else if (modulesData && modulesData.length > 0) {
+          setSelectedModuleId(modulesData[0].id);
+        }
       }
     } catch (error: any) {
       console.error("Error fetching modules:", error);
@@ -169,12 +189,48 @@ const Learning = () => {
     }
   };
 
+  const fetchChapters = async (moduleId: string) => {
+    try {
+      const { data: chaptersData, error: chaptersError } = await supabase
+        .from("chapters")
+        .select("*")
+        .eq("module_id", moduleId)
+        .order("order_index");
+
+      if (chaptersError) throw chaptersError;
+      setChapters(chaptersData || []);
+
+      if (user) {
+        const { data: progressData, error: progressError } = await supabase
+          .from("chapter_progress")
+          .select("*")
+          .eq("user_id", user.id)
+          .in("chapter_id", chaptersData?.map(c => c.id) || []);
+
+        if (progressError) throw progressError;
+        setChapterProgress(progressData || []);
+      }
+    } catch (error: any) {
+      console.error("Error fetching chapters:", error);
+    }
+  };
+
   const handlePractice = (moduleId: string) => {
     navigate(`/practice?moduleId=${moduleId}`);
   };
 
   const handleQuiz = (moduleId: string) => {
     navigate(`/quiz?moduleId=${moduleId}`);
+  };
+
+  const isChapterCompleted = (chapterId: string) => {
+    return chapterProgress.some(p => p.chapter_id === chapterId && p.completed);
+  };
+
+  const getChapterStatus = (chapterIndex: number) => {
+    if (chapterIndex === 0) return "unlocked";
+    const previousChapter = chapters[chapterIndex - 1];
+    return isChapterCompleted(previousChapter?.id) ? "unlocked" : "locked";
   };
 
   if (loading) {
@@ -209,6 +265,14 @@ const Learning = () => {
     ? Math.round((completedModules / modules.length) * 100)
     : 0;
 
+  const selectedModule = modules.find(m => m.id === selectedModuleId);
+  const selectedModuleProgress = moduleProgress.find(p => p.module_id === selectedModuleId);
+
+  const completedChapters = chapters.filter(c => isChapterCompleted(c.id)).length;
+  const moduleProgressPercentage = chapters.length > 0
+    ? Math.round((completedChapters / chapters.length) * 100)
+    : 0;
+
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b bg-card/50 backdrop-blur-sm sticky top-0 z-50">
@@ -219,7 +283,9 @@ const Learning = () => {
             </Button>
             <div>
               <h1 className="font-bold text-base md:text-lg">{course?.title || "কোর্স"}</h1>
-              <p className="text-xs md:text-sm text-muted-foreground">মডিউল ২ - সোশ্যাল মিডিয়া মার্কেটিং</p>
+              <p className="text-xs md:text-sm text-muted-foreground">
+                {selectedModule ? `মডিউল ${modules.findIndex(m => m.id === selectedModuleId) + 1} - ${selectedModule.title}` : ""}
+              </p>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -241,18 +307,25 @@ const Learning = () => {
                 const progress = getProgressPercentage(module);
                 const status = getModuleStatus(module);
                 const unlocked = isModuleUnlocked(index);
+                const isSelected = module.id === selectedModuleId;
 
                 return (
                   <Card
                     key={module.id}
                     className={`p-4 transition-all ${
-                      unlocked
+                      isSelected
+                        ? "border-primary border-2"
+                        : unlocked
                         ? status === "completed"
                           ? "bg-success/5 border-success/30 cursor-pointer hover:shadow-md"
                           : "cursor-pointer hover:shadow-md"
                         : "opacity-60 bg-muted/30"
                     }`}
-                    onClick={() => unlocked && handleStartModule(module, index)}
+                    onClick={() => {
+                      if (unlocked) {
+                        setSelectedModuleId(module.id);
+                      }
+                    }}
                   >
                     <div className="flex items-start justify-between gap-3 mb-2">
                       <h3 className="font-semibold text-sm leading-tight flex-1">
@@ -299,118 +372,156 @@ const Learning = () => {
           </div>
 
           <div className="space-y-6">
-            <Card className="p-6 bg-gradient-to-r from-violet-50 to-purple-50 dark:from-violet-950/20 dark:to-purple-950/20 border-violet-200 dark:border-violet-800">
-              <Badge className="mb-3 bg-violet-100 text-violet-700 dark:bg-violet-900/50 dark:text-violet-300">
-                চলমান
-              </Badge>
-              <h2 className="text-2xl font-bold mb-2">সোশ্যাল মিডিয়া মার্কেটিং</h2>
-              <p className="text-muted-foreground mb-4">বিভিন্ন সোশ্যাল মিডিয়া প্ল্যাটফর্মে মার্কেটিং এর বিস্তারিত শিখুন</p>
+            {selectedModule && (
+              <Card className="p-6 bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-950/20 dark:to-cyan-950/20 border-blue-200 dark:border-blue-800">
+                <Badge className="mb-3 bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300">
+                  {selectedModuleProgress?.status === "completed" ? "সম্পন্ন" : selectedModuleProgress ? "চলমান" : "নতুন"}
+                </Badge>
+                <h2 className="text-2xl font-bold mb-2">{selectedModule.title}</h2>
+                <p className="text-muted-foreground mb-4">{selectedModule.description || "এই মডিউলে শিখুন"}</p>
 
-              <div className="grid grid-cols-3 gap-4 mb-4">
-                <div className="text-center">
-                  <BookOpen className="w-6 h-6 mx-auto mb-1 text-violet-600 dark:text-violet-400" />
-                  <div className="text-sm text-muted-foreground">পাঠ্যসূচি</div>
+                <div className="grid grid-cols-3 gap-4 mb-4">
+                  <div className="text-center">
+                    <BookOpen className="w-6 h-6 mx-auto mb-1 text-blue-600 dark:text-blue-400" />
+                    <div className="text-sm font-semibold">{chapters.length}</div>
+                    <div className="text-xs text-muted-foreground">অধ্যায়</div>
+                  </div>
+                  <div className="text-center">
+                    <Award className="w-6 h-6 mx-auto mb-1 text-green-600 dark:text-green-400" />
+                    <div className="text-sm font-semibold">{completedChapters}</div>
+                    <div className="text-xs text-muted-foreground">সম্পন্ন</div>
+                  </div>
+                  <div className="text-center">
+                    <Trophy className="w-6 h-6 mx-auto mb-1 text-orange-600 dark:text-orange-400" />
+                    <div className="text-sm font-semibold">{selectedModule.points || 100}</div>
+                    <div className="text-xs text-muted-foreground">পয়েন্ট</div>
+                  </div>
                 </div>
-                <div className="text-center">
-                  <Award className="w-6 h-6 mx-auto mb-1 text-green-600 dark:text-green-400" />
-                  <div className="text-sm text-muted-foreground">সম্পন্ন</div>
-                </div>
-                <div className="text-center">
-                  <Trophy className="w-6 h-6 mx-auto mb-1 text-orange-600 dark:text-orange-400" />
-                  <div className="text-sm text-muted-foreground">পয়েন্ট</div>
-                </div>
-              </div>
 
-              <Progress value={45} className="h-3" />
-            </Card>
+                <Progress value={moduleProgressPercentage} className="h-3" />
+              </Card>
+            )}
 
             <div className="space-y-4">
               <h3 className="text-lg font-bold">অধ্যায়সমূহ</h3>
 
-              {[
-                { id: 1, title: "সোশ্যাল মিডিয়া কী এবং কেন?", videos: "৭২ মিনিট", status: "completed" },
-                { id: 2, title: "কেমন করে মার্কেটিং কৌশল", videos: "১০ মিনিট", status: "completed" },
-                { id: 3, title: "ইনস্টাগ্রাম মার্কেটিং কৌশল", videos: "২৬ মিনিট", status: "completed" },
-                { id: 4, title: "ফেসবুক ক্যালেন্ডার তৈরি", videos: "৩০ মিনিট", status: "locked" },
-                { id: 5, title: "অডিয়েন্স এনগেজমেন্ট", videos: "২০ মিনিট", status: "locked" },
-                { id: 6, title: "পারফরম্যান্স ট্র্যাকিং", videos: "২৫ মিনিট", status: "locked" }
-              ].map((chapter, idx) => (
-                <Card
-                  key={chapter.id}
-                  className={`p-5 transition-all ${
-                    chapter.status === "completed"
-                      ? "bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-800"
-                      : chapter.status === "locked"
-                      ? "opacity-60"
-                      : "hover:shadow-md cursor-pointer"
-                  }`}
-                >
-                  <div className="flex items-center gap-4">
-                    <div className={`w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 ${
-                      chapter.status === "completed"
-                        ? "bg-green-100 dark:bg-green-900/30"
-                        : chapter.status === "locked"
-                        ? "bg-muted"
-                        : "bg-violet-100 dark:bg-violet-900/30"
-                    }`}>
-                      {chapter.status === "completed" ? (
-                        <CheckCircle className="w-6 h-6 text-green-600 dark:text-green-400" />
-                      ) : chapter.status === "locked" ? (
-                        <span className="font-bold text-muted-foreground">{idx + 1}</span>
-                      ) : (
-                        <span className="font-bold text-violet-600 dark:text-violet-400">{idx + 1}</span>
-                      )}
-                    </div>
-
-                    <div className="flex-1">
-                      <h4 className="font-semibold mb-1">{chapter.title}</h4>
-                      <p className="text-sm text-muted-foreground flex items-center gap-1">
-                        <Clock className="w-3 h-3" />
-                        {chapter.videos}
-                      </p>
-                    </div>
-
-                    {chapter.status === "completed" ? (
-                      <Button variant="ghost" className="text-green-600 dark:text-green-400">
-                        সম্পন্ন হয়েছে
-                      </Button>
-                    ) : chapter.status === "locked" ? (
-                      <Button variant="ghost" disabled className="bg-violet-500 text-white hover:bg-violet-600">
-                        শুরু করুন
-                        <ChevronRight className="w-4 h-4 ml-1" />
-                      </Button>
-                    ) : (
-                      <Button className="bg-violet-500 text-white hover:bg-violet-600">
-                        শুরু করুন
-                        <ChevronRight className="w-4 h-4 ml-1" />
-                      </Button>
-                    )}
-                  </div>
+              {chapters.length === 0 ? (
+                <Card className="p-8 text-center">
+                  <BookOpen className="w-12 h-12 mx-auto mb-3 text-muted-foreground" />
+                  <p className="text-muted-foreground">এই মডিউলে কোনো অধ্যায় নেই</p>
                 </Card>
-              ))}
+              ) : (
+                chapters.map((chapter, idx) => {
+                  const completed = isChapterCompleted(chapter.id);
+                  const status = getChapterStatus(idx);
+                  const locked = status === "locked";
+
+                  return (
+                    <Card
+                      key={chapter.id}
+                      className={`p-5 transition-all ${
+                        completed
+                          ? "bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-800"
+                          : locked
+                          ? "opacity-60"
+                          : "hover:shadow-md cursor-pointer"
+                      }`}
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className={`w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 ${
+                          completed
+                            ? "bg-green-100 dark:bg-green-900/30"
+                            : locked
+                            ? "bg-muted"
+                            : "bg-blue-100 dark:bg-blue-900/30"
+                        }`}>
+                          {completed ? (
+                            <CheckCircle className="w-6 h-6 text-green-600 dark:text-green-400" />
+                          ) : (
+                            <span className={`font-bold ${locked ? "text-muted-foreground" : "text-blue-600 dark:text-blue-400"}`}>
+                              {idx + 1}
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="flex-1">
+                          <h4 className="font-semibold mb-1">{chapter.title}</h4>
+                          <p className="text-sm text-muted-foreground flex items-center gap-1">
+                            <Clock className="w-3 h-3" />
+                            {chapter.duration_minutes || 30} মিনিট
+                          </p>
+                        </div>
+
+                        {completed ? (
+                          <Button variant="ghost" className="text-green-600 dark:text-green-400">
+                            সম্পন্ন হয়েছে
+                          </Button>
+                        ) : locked ? (
+                          <Button variant="ghost" disabled>
+                            <Lock className="w-4 h-4 mr-1" />
+                            লক করা
+                          </Button>
+                        ) : (
+                          <Button
+                            className="bg-blue-600 hover:bg-blue-700 text-white"
+                            onClick={() => selectedModuleId && handleStartModule(selectedModule, modules.findIndex(m => m.id === selectedModuleId))}
+                          >
+                            শুরু করুন
+                            <ChevronRight className="w-4 h-4 ml-1" />
+                          </Button>
+                        )}
+                      </div>
+                    </Card>
+                  );
+                })
+              )}
             </div>
 
-            <Card className="p-6 bg-gradient-to-br from-orange-50 to-amber-50 dark:from-orange-950/20 dark:to-amber-950/20 border-orange-200 dark:border-orange-800">
-              <div className="flex items-start gap-4 mb-4">
-                <div className="w-12 h-12 rounded-full bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center flex-shrink-0">
-                  <Trophy className="w-6 h-6 text-orange-600 dark:text-orange-400" />
+            {selectedModule && selectedModuleId && (
+              <Card className="p-6 bg-gradient-to-br from-orange-50 to-amber-50 dark:from-orange-950/20 dark:to-amber-950/20 border-orange-200 dark:border-orange-800">
+                <div className="flex items-start gap-4 mb-4">
+                  <div className="w-12 h-12 rounded-full bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center flex-shrink-0">
+                    <Trophy className="w-6 h-6 text-orange-600 dark:text-orange-400" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-lg mb-1">প্র্যাকটিস ও কুইজ</h3>
+                    <p className="text-sm text-muted-foreground">সব অধ্যায় শেষ করুন, তারপর অনুশীলন করুন এবং পরীক্ষা দিন</p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="font-semibold text-lg mb-1">প্র্যাকটিস ও কুইজ</h3>
-                  <p className="text-sm text-muted-foreground">সব অধ্যায় শেষ করুন, তারপর অনুশীলন করুন এবং পরীক্ষা দিন</p>
-                </div>
-              </div>
 
-              <div className="flex gap-3">
-                <Button className="flex-1 bg-green-600 hover:bg-green-700 text-white">
-                  প্র্যাকটিস শুরু করুন
-                </Button>
-                <Button variant="outline" className="flex-1" disabled>
-                  চূড়ান্ত কুইজ
-                  <Lock className="w-4 h-4 ml-2" />
-                </Button>
-              </div>
-            </Card>
+                <div className="flex gap-3">
+                  <Button
+                    className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+                    onClick={() => handlePractice(selectedModuleId)}
+                    disabled={!selectedModuleProgress?.learning_completed}
+                  >
+                    {selectedModuleProgress?.learning_completed ? (
+                      "প্র্যাকটিস শুরু করুন"
+                    ) : (
+                      <>
+                        <Lock className="w-4 h-4 mr-2" />
+                        প্র্যাকটিস লক করা
+                      </>
+                    )}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="flex-1"
+                    onClick={() => handleQuiz(selectedModuleId)}
+                    disabled={!selectedModuleProgress?.practice_completed}
+                  >
+                    {selectedModuleProgress?.practice_completed ? (
+                      "চূড়ান্ত কুইজ"
+                    ) : (
+                      <>
+                        চূড়ান্ত কুইজ
+                        <Lock className="w-4 h-4 ml-2" />
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </Card>
+            )}
           </div>
         </div>
       </div>
