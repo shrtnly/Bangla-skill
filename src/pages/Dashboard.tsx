@@ -59,15 +59,20 @@ const Dashboard = () => {
         setProfile(profileData);
       }
 
-      // Fetch courses
-      const { data: coursesData, error: coursesError } = await supabase
-        .from("courses")
-        .select("*");
+      // Fetch enrolled courses only
+      const { data: enrollmentsData, error: enrollmentsError } = await supabase
+        .from("enrollments")
+        .select(`
+          *,
+          courses (*)
+        `)
+        .eq("user_id", user.id);
 
-      if (coursesError) {
-        console.error("Error fetching courses:", coursesError);
+      if (enrollmentsError) {
+        console.error("Error fetching enrollments:", enrollmentsError);
       } else {
-        setCourses(coursesData || []);
+        const enrolledCourses = enrollmentsData?.map((enrollment: any) => enrollment.courses) || [];
+        setCourses(enrolledCourses);
       }
     };
 
@@ -211,8 +216,9 @@ const Dashboard = () => {
 
             <div className="space-y-4">
               {courses.length === 0 ? (
-                <Card className="p-8 text-center">
-                  <p className="text-muted-foreground">কোন কোর্স পাওয়া যায়নি</p>
+                <Card className="p-8 text-center space-y-4">
+                  <p className="text-muted-foreground">আপনি এখনো কোনো কোর্সে ভর্তি হননি</p>
+                  <Button onClick={() => navigate("/")}>কোর্স দেখুন</Button>
                 </Card>
               ) : (
                 courses.map((course) => (
