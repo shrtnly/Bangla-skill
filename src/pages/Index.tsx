@@ -218,7 +218,7 @@ const Index = () => {
         </div>
       </section>
 
-            {/* Stats Section */}
+            {/* Stats Section 
       <section className="bg-gradient-to-r from-primary to-primary-glow py-16">
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-white">
@@ -232,6 +232,8 @@ const Index = () => {
         </div>
       </section>
 
+*/}
+      
       {/* CTA Section */}
       <section className="container mx-auto px-4 py-20">
         <Card className="relative overflow-hidden bg-gradient-to-r from-primary to-primary-glow p-12 md:p-16 text-center text-white">
