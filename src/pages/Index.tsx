@@ -14,9 +14,14 @@ import {
   ArrowRight
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 const Index = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const { toast } = useToast();
 
   const courses = [
     {
@@ -90,6 +95,42 @@ const Index = () => {
     { value: "৮,৫০০+", label: "সার্টিফিকেট" },
     { value: "৪.৮", label: "রেটিং" },
   ];
+
+  const handleEnroll = async (courseId: number) => {
+    if (!user) {
+      toast({
+        title: "লগইন প্রয়োজন",
+        description: "কোর্সে ভর্তি হতে প্রথমে লগইন করুন",
+        variant: "destructive",
+      });
+      navigate("/auth");
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from("enrollments")
+        .insert({
+          user_id: user.id,
+          course_id: courseId,
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: "ভর্তি সফল!",
+        description: "আপনি সফলভাবে কোর্সে ভর্তি হয়েছেন",
+      });
+
+      navigate("/learning");
+    } catch (error: any) {
+      toast({
+        title: "ত্রুটি",
+        description: error.message || "ভর্তি করতে সমস্যা হয়েছে",
+        variant: "destructive",
+      });
+    }
+  };
 
   return (
     <div className="min-h-screen">
@@ -182,8 +223,15 @@ const Index = () => {
                 </div>
                 <div className="flex items-center justify-between pt-2">
                   <span className="text-sm text-muted-foreground">{course.modules} টি মডিউল</span>
-                  <Button size="sm" variant="ghost" className="text-primary">
-                    বিস্তারিত →
+                  <Button
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleEnroll(course.id);
+                    }}
+                    className="bg-primary text-white hover:bg-primary/90"
+                  >
+                    ভর্তি হন
                   </Button>
                 </div>
               </div>

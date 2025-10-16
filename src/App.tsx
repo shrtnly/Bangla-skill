@@ -11,6 +11,9 @@ import Dashboard from "./pages/Dashboard";
 import Learning from "./pages/Learning";
 import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
+import Chapter from "./pages/Chapter";
+import Practice from "./pages/Practice";
+import Quiz from "./pages/Quiz";
 
 const queryClient = new QueryClient();
 
@@ -45,6 +48,30 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <Profile />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/chapter"
+              element={
+                <ProtectedRoute>
+                  <Chapter />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/practice"
+              element={
+                <ProtectedRoute>
+                  <Practice />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/quiz"
+              element={
+                <ProtectedRoute>
+                  <Quiz />
                 </ProtectedRoute>
               }
             />

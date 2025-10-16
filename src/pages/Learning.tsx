@@ -12,9 +12,11 @@ import {
   ArrowLeft,
   Trophy,
   Star,
-  Loader2
+  Loader2,
+  Clock,
+  Award
 } from "lucide-react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -22,47 +24,54 @@ import { toast } from "sonner";
 const Learning = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [searchParams] = useSearchParams();
-  const courseId = searchParams.get("courseId");
-  
+
   const [loading, setLoading] = useState(true);
-  const [course, setCourse] = useState<any>(null);
+  const [enrollments, setEnrollments] = useState<any[]>([]);
+  const [selectedCourseId, setSelectedCourseId] = useState<string | null>(null);
   const [modules, setModules] = useState<any[]>([]);
-  const [selectedModule, setSelectedModule] = useState<string | null>(null);
-  const [chapters, setChapters] = useState<any[]>([]);
-  const [userProgress, setUserProgress] = useState<any[]>([]);
-
+  const [moduleProgress, setModuleProgress] = useState<any[]>([]);
 
   useEffect(() => {
-    if (!courseId) {
-      toast.error("কোর্স নির্বাচন করুন");
-      navigate("/dashboard");
-      return;
+    if (user) {
+      fetchEnrollments();
     }
-    fetchCourseData();
-  }, [courseId]);
+  }, [user]);
 
   useEffect(() => {
-    if (selectedModule) {
-      fetchChapters(selectedModule);
+    if (selectedCourseId) {
+      fetchModules(selectedCourseId);
     }
-  }, [selectedModule]);
+  }, [selectedCourseId]);
 
-  const fetchCourseData = async () => {
+  const fetchEnrollments = async () => {
     try {
       setLoading(true);
 
-      // Fetch course
-      const { data: courseData, error: courseError } = await supabase
-        .from("courses")
-        .select("*")
-        .eq("id", courseId)
-        .single();
+      const { data, error } = await supabase
+        .from("enrollments")
+        .select(`
+          *,
+          courses (*)
+        `)
+        .eq("user_id", user?.id);
 
-      if (courseError) throw courseError;
-      setCourse(courseData);
+      if (error) throw error;
 
-      // Fetch modules
+      setEnrollments(data || []);
+
+      if (data && data.length > 0) {
+        setSelectedCourseId(data[0].course_id);
+      }
+    } catch (error: any) {
+      console.error("Error fetching enrollments:", error);
+      toast.error("তথ্য লোড করতে সমস্যা হয়েছে");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchModules = async (courseId: string) => {
+    try {
       const { data: modulesData, error: modulesError } = await supabase
         .from("modules")
         .select("*")
@@ -70,88 +79,90 @@ const Learning = () => {
         .order("order_index");
 
       if (modulesError) throw modulesError;
-      setModules(modulesData);
+      setModules(modulesData || []);
 
-      // Select first module by default
-      if (modulesData && modulesData.length > 0) {
-        setSelectedModule(modulesData[0].id);
-      }
-
-      // Fetch user progress
       if (user) {
         const { data: progressData, error: progressError } = await supabase
-          .from("user_progress")
+          .from("module_progress")
           .select("*")
-          .eq("user_id", user.id);
+          .eq("user_id", user.id)
+          .in("module_id", modulesData?.map(m => m.id) || []);
 
         if (progressError) throw progressError;
-        setUserProgress(progressData || []);
+        setModuleProgress(progressData || []);
       }
     } catch (error: any) {
-      console.error("Error fetching course data:", error);
-      toast.error("ডেটা লোড করতে সমস্যা হয়েছে");
-    } finally {
-      setLoading(false);
+      console.error("Error fetching modules:", error);
+      toast.error("মডিউল লোড করতে সমস্যা হয়েছে");
     }
   };
 
-  const fetchChapters = async (moduleId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from("chapters")
-        .select("*")
-        .eq("module_id", moduleId)
-        .order("order_index");
-
-      if (error) throw error;
-      setChapters(data || []);
-    } catch (error: any) {
-      console.error("Error fetching chapters:", error);
-      toast.error("অধ্যায় লোড করতে সমস্যা হয়েছে");
-    }
+  const getModuleStatus = (module: any) => {
+    const progress = moduleProgress.find(p => p.module_id === module.id);
+    if (!progress) return "locked";
+    return progress.status;
   };
 
-  const markChapterComplete = async (chapterId: string) => {
-    if (!user) {
-      toast.error("অনুগ্রহ করে লগইন করুন");
+  const isModuleUnlocked = (moduleIndex: number) => {
+    if (moduleIndex === 0) return true;
+
+    const previousModule = modules[moduleIndex - 1];
+    const previousProgress = moduleProgress.find(p => p.module_id === previousModule?.id);
+
+    return previousProgress?.quiz_passed === true;
+  };
+
+  const getProgressPercentage = (module: any) => {
+    const progress = moduleProgress.find(p => p.module_id === module.id);
+    if (!progress) return 0;
+
+    let completed = 0;
+    let total = 3;
+
+    if (progress.learning_completed) completed++;
+    if (progress.practice_completed) completed++;
+    if (progress.quiz_passed) completed++;
+
+    return Math.round((completed / total) * 100);
+  };
+
+  const handleStartModule = async (module: any, moduleIndex: number) => {
+    if (!isModuleUnlocked(moduleIndex)) {
+      toast.error("পূর্ববর্তী মডিউল সম্পন্ন করুন");
       return;
     }
 
     try {
-      const { error } = await supabase
-        .from("user_progress")
-        .upsert({
-          user_id: user.id,
-          chapter_id: chapterId,
-          is_completed: true,
-          completed_at: new Date().toISOString()
-        });
+      const existingProgress = moduleProgress.find(p => p.module_id === module.id);
 
-      if (error) throw error;
+      if (!existingProgress) {
+        const { error } = await supabase
+          .from("module_progress")
+          .insert({
+            user_id: user?.id,
+            module_id: module.id,
+            status: "in_progress",
+            started_at: new Date().toISOString()
+          });
 
-      toast.success("অধ্যায় সম্পন্ন হয়েছে!");
-      fetchCourseData();
+        if (error) throw error;
+
+        await fetchModules(selectedCourseId!);
+      }
+
+      navigate(`/chapter?moduleId=${module.id}`);
     } catch (error: any) {
-      console.error("Error marking chapter complete:", error);
-      toast.error("সমস্যা হয়েছে");
+      console.error("Error starting module:", error);
+      toast.error("মডিউল শুরু করতে সমস্যা হয়েছে");
     }
   };
 
-  const isChapterCompleted = (chapterId: string) => {
-    return userProgress.some(
-      (p) => p.chapter_id === chapterId && p.is_completed
-    );
+  const handlePractice = (moduleId: string) => {
+    navigate(`/practice?moduleId=${moduleId}`);
   };
 
-  const getModuleProgress = (moduleId: string) => {
-    const moduleChapters = chapters.filter((c) => c.module_id === moduleId);
-    if (moduleChapters.length === 0) return 0;
-
-    const completedCount = moduleChapters.filter((c) =>
-      isChapterCompleted(c.id)
-    ).length;
-
-    return Math.round((completedCount / moduleChapters.length) * 100);
+  const handleQuiz = (moduleId: string) => {
+    navigate(`/quiz?moduleId=${moduleId}`);
   };
 
   if (loading) {
@@ -162,24 +173,32 @@ const Learning = () => {
     );
   }
 
-  if (!course) {
+  if (enrollments.length === 0) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-muted-foreground mb-4">কোর্স পাওয়া যায়নি</p>
-          <Button onClick={() => navigate("/dashboard")}>ড্যাশবোর্ডে ফিরে যান</Button>
+        <div className="text-center space-y-4">
+          <BookOpen className="w-16 h-16 mx-auto text-muted-foreground" />
+          <p className="text-muted-foreground">আপনি এখনও কোনো কোর্সে ভর্তি হননি</p>
+          <Button onClick={() => navigate("/")}>কোর্স দেখুন</Button>
         </div>
       </div>
     );
   }
 
-  const selectedModuleData = modules.find((m) => m.id === selectedModule);
-  const moduleProgress = selectedModuleData ? getModuleProgress(selectedModuleData.id) : 0;
-  const completedChapters = chapters.filter((c) => isChapterCompleted(c.id)).length;
+  const selectedEnrollment = enrollments.find(e => e.course_id === selectedCourseId);
+  const course = selectedEnrollment?.courses;
+
+  const completedModules = modules.filter(m => {
+    const progress = moduleProgress.find(p => p.module_id === m.id);
+    return progress?.status === "completed";
+  }).length;
+
+  const overallProgress = modules.length > 0
+    ? Math.round((completedModules / modules.length) * 100)
+    : 0;
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
       <header className="border-b bg-card/50 backdrop-blur-sm sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
@@ -187,201 +206,198 @@ const Learning = () => {
               <ArrowLeft className="w-5 h-5" />
             </Button>
             <div>
-              <h1 className="font-bold text-lg">{course.title}</h1>
-              <p className="text-sm text-muted-foreground">
-                {selectedModuleData?.title || "মডিউল নির্বাচন করুন"}
-              </p>
+              <h1 className="font-bold text-base md:text-lg">{course?.title || "কোর্স"}</h1>
+              <p className="text-xs md:text-sm text-muted-foreground">মডিউল ২ - সোশ্যাল মিডিয়া মার্কেটিং</p>
             </div>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
             <div className="text-right">
-              <div className="text-sm text-muted-foreground">মডিউল অগ্রগতি</div>
-              <div className="font-bold text-lg">{moduleProgress}%</div>
+              <div className="text-xs text-muted-foreground">মোট অগ্রগতি</div>
+              <div className="font-bold text-sm md:text-lg">{overallProgress}%</div>
             </div>
           </div>
         </div>
       </header>
 
-      <div className="container mx-auto px-4 py-8">
-        <div className="grid lg:grid-cols-3 gap-8">
-          {/* Module List */}
-          <div className="lg:col-span-1 space-y-4">
-            <h2 className="text-xl font-bold">সব মডিউল</h2>
+      <div className="container mx-auto px-4 py-6">
+        <div className="grid lg:grid-cols-[320px,1fr] gap-6">
+          <div className="space-y-4">
+            <h2 className="text-lg font-bold">সব মডিউল</h2>
+
             <div className="space-y-3">
-              {modules.map((module) => (
-                <Card
-                  key={module.id}
-                  className={`p-4 cursor-pointer transition-all ${
-                    selectedModule === module.id
-                      ? "border-primary shadow-md"
-                      : module.locked
-                      ? "opacity-60"
-                      : "card-hover"
-                  }`}
-                  onClick={() => !module.locked && setSelectedModule(module.id)}
-                >
-                  <div className="space-y-3">
-                    <div className="flex items-start justify-between gap-2">
-                      <h3 className="font-semibold text-sm leading-tight">{module.title}</h3>
-                      {module.is_locked ? (
+              {modules.map((module, index) => {
+                const progress = getProgressPercentage(module);
+                const status = getModuleStatus(module);
+                const unlocked = isModuleUnlocked(index);
+
+                return (
+                  <Card
+                    key={module.id}
+                    className={`p-4 transition-all ${
+                      unlocked
+                        ? status === "completed"
+                          ? "bg-success/5 border-success/30 cursor-pointer hover:shadow-md"
+                          : "cursor-pointer hover:shadow-md"
+                        : "opacity-60 bg-muted/30"
+                    }`}
+                    onClick={() => unlocked && handleStartModule(module, index)}
+                  >
+                    <div className="flex items-start justify-between gap-3 mb-2">
+                      <h3 className="font-semibold text-sm leading-tight flex-1">
+                        মডিউল {index + 1}. {module.title}
+                      </h3>
+                      {!unlocked ? (
                         <Lock className="w-5 h-5 text-muted-foreground flex-shrink-0" />
-                      ) : getModuleProgress(module.id) === 100 ? (
+                      ) : status === "completed" ? (
                         <CheckCircle className="w-5 h-5 text-success flex-shrink-0" />
-                      ) : (
+                      ) : status === "in_progress" ? (
                         <Play className="w-5 h-5 text-primary flex-shrink-0" />
-                      )}
-                    </div>
-                    
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <span>
-                        {chapters.filter(c => c.module_id === module.id && isChapterCompleted(c.id)).length}/
-                        {chapters.filter(c => c.module_id === module.id).length} অধ্যায়
-                      </span>
+                      ) : null}
                     </div>
 
-                    {!module.is_locked && (
-                      <Progress value={getModuleProgress(module.id)} className="h-1.5" />
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
+                      <Clock className="w-3 h-3" />
+                      <span>{module.duration_minutes || 30} মিনিট</span>
+                      <span>•</span>
+                      <Award className="w-3 h-3" />
+                      <span>{module.points || 100}</span>
+                    </div>
+
+                    {unlocked && (
+                      <Progress value={progress} className="h-1.5" />
+                    )}
+                  </Card>
+                );
+              })}
+            </div>
+
+            <Card className="p-5 bg-gradient-to-br from-orange-50 to-pink-50 dark:from-orange-950/20 dark:to-pink-950/20 border-orange-200 dark:border-orange-800">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-full bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center flex-shrink-0">
+                  <Star className="w-5 h-5 text-orange-600 dark:text-orange-400" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-semibold text-sm mb-1">সামগ্রিক অগ্রগতি</h3>
+                  <div className="text-2xl font-bold mb-2">{completedModules}/{modules.length} মডিউল</div>
+                  <Progress value={overallProgress} className="h-2 mb-2" />
+                  <p className="text-xs text-muted-foreground">পরবর্তী মডিউল আনলক করতে এগিয়ে যান এবং শিখুন!</p>
+                </div>
+              </div>
+            </Card>
+          </div>
+
+          <div className="space-y-6">
+            <Card className="p-6 bg-gradient-to-r from-violet-50 to-purple-50 dark:from-violet-950/20 dark:to-purple-950/20 border-violet-200 dark:border-violet-800">
+              <Badge className="mb-3 bg-violet-100 text-violet-700 dark:bg-violet-900/50 dark:text-violet-300">
+                চলমান
+              </Badge>
+              <h2 className="text-2xl font-bold mb-2">সোশ্যাল মিডিয়া মার্কেটিং</h2>
+              <p className="text-muted-foreground mb-4">বিভিন্ন সোশ্যাল মিডিয়া প্ল্যাটফর্মে মার্কেটিং এর বিস্তারিত শিখুন</p>
+
+              <div className="grid grid-cols-3 gap-4 mb-4">
+                <div className="text-center">
+                  <BookOpen className="w-6 h-6 mx-auto mb-1 text-violet-600 dark:text-violet-400" />
+                  <div className="text-sm text-muted-foreground">পাঠ্যসূচি</div>
+                </div>
+                <div className="text-center">
+                  <Award className="w-6 h-6 mx-auto mb-1 text-green-600 dark:text-green-400" />
+                  <div className="text-sm text-muted-foreground">সম্পন্ন</div>
+                </div>
+                <div className="text-center">
+                  <Trophy className="w-6 h-6 mx-auto mb-1 text-orange-600 dark:text-orange-400" />
+                  <div className="text-sm text-muted-foreground">পয়েন্ট</div>
+                </div>
+              </div>
+
+              <Progress value={45} className="h-3" />
+            </Card>
+
+            <div className="space-y-4">
+              <h3 className="text-lg font-bold">অধ্যায়সমূহ</h3>
+
+              {[
+                { id: 1, title: "সোশ্যাল মিডিয়া কী এবং কেন?", videos: "৭২ মিনিট", status: "completed" },
+                { id: 2, title: "কেমন করে মার্কেটিং কৌশল", videos: "১০ মিনিট", status: "completed" },
+                { id: 3, title: "ইনস্টাগ্রাম মার্কেটিং কৌশল", videos: "২৬ মিনিট", status: "completed" },
+                { id: 4, title: "ফেসবুক ক্যালেন্ডার তৈরি", videos: "৩০ মিনিট", status: "locked" },
+                { id: 5, title: "অডিয়েন্স এনগেজমেন্ট", videos: "২০ মিনিট", status: "locked" },
+                { id: 6, title: "পারফরম্যান্স ট্র্যাকিং", videos: "২৫ মিনিট", status: "locked" }
+              ].map((chapter, idx) => (
+                <Card
+                  key={chapter.id}
+                  className={`p-5 transition-all ${
+                    chapter.status === "completed"
+                      ? "bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-800"
+                      : chapter.status === "locked"
+                      ? "opacity-60"
+                      : "hover:shadow-md cursor-pointer"
+                  }`}
+                >
+                  <div className="flex items-center gap-4">
+                    <div className={`w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 ${
+                      chapter.status === "completed"
+                        ? "bg-green-100 dark:bg-green-900/30"
+                        : chapter.status === "locked"
+                        ? "bg-muted"
+                        : "bg-violet-100 dark:bg-violet-900/30"
+                    }`}>
+                      {chapter.status === "completed" ? (
+                        <CheckCircle className="w-6 h-6 text-green-600 dark:text-green-400" />
+                      ) : chapter.status === "locked" ? (
+                        <span className="font-bold text-muted-foreground">{idx + 1}</span>
+                      ) : (
+                        <span className="font-bold text-violet-600 dark:text-violet-400">{idx + 1}</span>
+                      )}
+                    </div>
+
+                    <div className="flex-1">
+                      <h4 className="font-semibold mb-1">{chapter.title}</h4>
+                      <p className="text-sm text-muted-foreground flex items-center gap-1">
+                        <Clock className="w-3 h-3" />
+                        {chapter.videos}
+                      </p>
+                    </div>
+
+                    {chapter.status === "completed" ? (
+                      <Button variant="ghost" className="text-green-600 dark:text-green-400">
+                        সম্পন্ন হয়েছে
+                      </Button>
+                    ) : chapter.status === "locked" ? (
+                      <Button variant="ghost" disabled className="bg-violet-500 text-white hover:bg-violet-600">
+                        শুরু করুন
+                        <ChevronRight className="w-4 h-4 ml-1" />
+                      </Button>
+                    ) : (
+                      <Button className="bg-violet-500 text-white hover:bg-violet-600">
+                        শুরু করুন
+                        <ChevronRight className="w-4 h-4 ml-1" />
+                      </Button>
                     )}
                   </div>
                 </Card>
               ))}
             </div>
 
-            {/* Overall Progress Card */}
-            <Card className="p-6 bg-gradient-to-br from-primary/10 to-accent/10 space-y-3">
-              <h3 className="font-semibold flex items-center gap-2">
-                <Star className="w-5 h-5 text-accent" />
-                কোর্স অগ্রগতি
-              </h3>
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span>সম্পন্ন মডিউল: {modules.filter(m => getModuleProgress(m.id) === 100).length}/{modules.length}</span>
-                </div>
-                <Progress 
-                  value={modules.length > 0 ? (modules.filter(m => getModuleProgress(m.id) === 100).length / modules.length) * 100 : 0} 
-                  className="h-2" 
-                />
-              </div>
-            </Card>
-          </div>
-
-          {/* Chapter Content */}
-          <div className="lg:col-span-2 space-y-6">
-            {selectedModuleData && (
-              <>
-                <Card className="p-6 space-y-4">
-                  <div className="flex items-start justify-between">
-                    <div className="space-y-2">
-                      <Badge className="bg-primary/10 text-primary">
-                        {moduleProgress === 100 ? "সম্পন্ন" : "চলমান"}
-                      </Badge>
-                      <h2 className="text-2xl font-bold">{selectedModuleData.title}</h2>
-                      <p className="text-muted-foreground">
-                        {selectedModuleData.description || "মডিউলের বিবরণ নেই"}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-3 gap-4 py-4">
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-primary">{chapters.length}</div>
-                      <div className="text-sm text-muted-foreground">অধ্যায়</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-success">{completedChapters}</div>
-                      <div className="text-sm text-muted-foreground">সম্পন্ন</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-accent">{moduleProgress}%</div>
-                      <div className="text-sm text-muted-foreground">অগ্রগতি</div>
-                    </div>
-                  </div>
-
-                  <Progress value={moduleProgress} className="h-3" />
-                </Card>
-
-            {/* Chapters List */}
-            <div className="space-y-4">
-              <h3 className="text-xl font-bold">অধ্যায়সমূহ</h3>
-              {chapters.length === 0 ? (
-                <Card className="p-8 text-center">
-                  <p className="text-muted-foreground">এই মডিউলে কোন অধ্যায় নেই</p>
-                </Card>
-              ) : (
-                <div className="space-y-3">
-                  {chapters.map((chapter, index) => {
-                    const completed = isChapterCompleted(chapter.id);
-                    return (
-                      <Card
-                        key={chapter.id}
-                        className={`p-5 card-hover cursor-pointer ${
-                          completed ? "bg-success/5 border-success/20" : ""
-                        }`}
-                      >
-                        <div className="flex items-center gap-4">
-                          <div
-                            className={`w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 ${
-                              completed
-                                ? "bg-success/20 text-success"
-                                : "bg-primary/10 text-primary"
-                            }`}
-                          >
-                            {completed ? (
-                              <CheckCircle className="w-6 h-6" />
-                            ) : (
-                              <span className="font-bold">{index + 1}</span>
-                            )}
-                          </div>
-                          <div className="flex-1">
-                            <h4 className="font-semibold mb-1">{chapter.title}</h4>
-                            <p className="text-sm text-muted-foreground">
-                              {chapter.duration ? `${chapter.duration} মিনিট` : "সময়সীমা নেই"}
-                            </p>
-                          </div>
-                          <Button
-                            variant={completed ? "outline" : "default"}
-                            className={!completed ? "btn-hero" : ""}
-                            onClick={() => !completed && markChapterComplete(chapter.id)}
-                          >
-                            {completed ? "পুনরায় দেখুন" : "সম্পন্ন করুন"}
-                            <ChevronRight className="w-4 h-4 ml-1" />
-                          </Button>
-                        </div>
-                      </Card>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-              </>
-            )}
-
-            {/* Practice & Quiz Section */}
-            <Card className="p-6 space-y-4 bg-gradient-to-br from-accent/10 to-primary/10">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-full bg-accent/20 flex items-center justify-center">
-                  <Trophy className="w-6 h-6 text-accent" />
+            <Card className="p-6 bg-gradient-to-br from-orange-50 to-amber-50 dark:from-orange-950/20 dark:to-amber-950/20 border-orange-200 dark:border-orange-800">
+              <div className="flex items-start gap-4 mb-4">
+                <div className="w-12 h-12 rounded-full bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center flex-shrink-0">
+                  <Trophy className="w-6 h-6 text-orange-600 dark:text-orange-400" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-lg">প্র্যাকটিস ও কুইজ</h3>
-                  <p className="text-sm text-muted-foreground">
-                    সব অধ্যায় সম্পন্ন করুন, তারপর কুইজে অংশ নিন
-                  </p>
+                  <h3 className="font-semibold text-lg mb-1">প্র্যাকটিস ও কুইজ</h3>
+                  <p className="text-sm text-muted-foreground">সব অধ্যায় শেষ করুন, তারপর অনুশীলন করুন এবং পরীক্ষা দিন</p>
                 </div>
               </div>
+
               <div className="flex gap-3">
-                <Button className="flex-1 btn-success" disabled>
+                <Button className="flex-1 bg-green-600 hover:bg-green-700 text-white">
                   প্র্যাকটিস শুরু করুন
-                  <Lock className="w-4 h-4 ml-2" />
                 </Button>
-                <Button className="flex-1" variant="outline" disabled>
+                <Button variant="outline" className="flex-1" disabled>
                   চূড়ান্ত কুইজ
                   <Lock className="w-4 h-4 ml-2" />
                 </Button>
               </div>
-              <p className="text-xs text-center text-muted-foreground">
-                সব অধ্যায় সম্পন্ন করার পর এই বিভাগ আনলক হবে
-              </p>
             </Card>
           </div>
         </div>
