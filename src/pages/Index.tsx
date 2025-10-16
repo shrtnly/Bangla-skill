@@ -135,20 +135,6 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Stats Section */}
-      <section className="bg-gradient-to-r from-primary to-primary-glow py-16">
-        <div className="container mx-auto px-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-white">
-            {stats.map((stat, index) => (
-              <div key={index} className="text-center animate-scale-in" style={{ animationDelay: `${index * 100}ms` }}>
-                <div className="text-3xl md:text-5xl font-bold mb-2">{stat.value}</div>
-                <div className="text-sm md:text-base opacity-90">{stat.label}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* Featured Courses */}
       <section className="container mx-auto px-4 py-20">
         <div className="text-center mb-12">
@@ -227,6 +213,20 @@ const Index = () => {
                 <h3 className="font-semibold text-lg">{feature.title}</h3>
                 <p className="text-muted-foreground text-sm">{feature.description}</p>
               </Card>
+            ))}
+          </div>
+        </div>
+      </section>
+
+            {/* Stats Section */}
+      <section className="bg-gradient-to-r from-primary to-primary-glow py-16">
+        <div className="container mx-auto px-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-white">
+            {stats.map((stat, index) => (
+              <div key={index} className="text-center animate-scale-in" style={{ animationDelay: `${index * 100}ms` }}>
+                <div className="text-3xl md:text-5xl font-bold mb-2">{stat.value}</div>
+                <div className="text-sm md:text-base opacity-90">{stat.label}</div>
+              </div>
             ))}
           </div>
         </div>
