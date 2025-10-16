@@ -66,15 +66,29 @@ const Quiz = () => {
       if (moduleError) throw moduleError;
       setModule(moduleData);
 
+      const { data: moduleProgressData, error: progressError } = await supabase
+        .from("module_progress")
+        .select("*")
+        .eq("user_id", user?.id)
+        .eq("module_id", moduleId)
+        .maybeSingle();
+
+      if (progressError) throw progressError;
+
+      if (!moduleProgressData?.practice_completed) {
+        toast.error("প্রথমে কমপক্ষে 1 বার প্র্যাকটিস করুন");
+        navigate(`/practice?moduleId=${moduleId}`);
+        return;
+      }
+
       const { data: practiceQuestions, error: questionsError } = await supabase
         .from("practice_questions")
         .select("*")
-        .eq("module_id", moduleId)
-        .limit(15);
+        .eq("module_id", moduleId);
 
       if (questionsError) throw questionsError;
 
-      const shuffled = practiceQuestions?.sort(() => Math.random() - 0.5) || [];
+      const shuffled = practiceQuestions?.sort(() => Math.random() - 0.5).slice(0, 10) || [];
       setQuestions(shuffled);
 
       const { data: attemptsData, error: attemptsError } = await supabase

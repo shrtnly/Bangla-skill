@@ -23,6 +23,7 @@ const Practice = () => {
   const [score, setScore] = useState(0);
   const [practiceAttempts, setPracticeAttempts] = useState<any[]>([]);
   const [isComplete, setIsComplete] = useState(false);
+  const [hasStarted, setHasStarted] = useState(false);
 
   useEffect(() => {
     if (moduleId && user) {
@@ -43,25 +44,44 @@ const Practice = () => {
       if (moduleError) throw moduleError;
       setModule(moduleData);
 
-      const { data: questionsData, error: questionsError } = await supabase
-        .from("practice_questions")
+      const { data: moduleProgressData, error: progressError } = await supabase
+        .from("module_progress")
         .select("*")
+        .eq("user_id", user?.id)
         .eq("module_id", moduleId)
-        .limit(10);
+        .maybeSingle();
 
-      if (questionsError) throw questionsError;
+      if (progressError) throw progressError;
 
-      const shuffled = questionsData?.sort(() => Math.random() - 0.5) || [];
-      setQuestions(shuffled);
+      if (!moduleProgressData?.learning_completed) {
+        toast.error("প্রথমে সব অধ্যায় সম্পন্ন করুন");
+        navigate(`/chapter?moduleId=${moduleId}`);
+        return;
+      }
 
       const { data: attemptsData, error: attemptsError } = await supabase
         .from("practice_attempts")
         .select("*")
         .eq("user_id", user?.id)
-        .eq("module_id", moduleId);
+        .eq("module_id", moduleId)
+        .order("attempt_number", { ascending: false });
 
       if (attemptsError) throw attemptsError;
       setPracticeAttempts(attemptsData || []);
+
+      if (attemptsData && attemptsData.length >= 3) {
+        toast.info("আপনি সর্বোচ্চ 3 বার প্র্যাকটিস করেছেন");
+      }
+
+      const { data: questionsData, error: questionsError } = await supabase
+        .from("practice_questions")
+        .select("*")
+        .eq("module_id", moduleId);
+
+      if (questionsError) throw questionsError;
+
+      const shuffled = questionsData?.sort(() => Math.random() - 0.5).slice(0, 10) || [];
+      setQuestions(shuffled);
     } catch (error: any) {
       console.error("Error fetching practice data:", error);
       toast.error("ডেটা লোড করতে সমস্যা হয়েছে");
@@ -113,20 +133,23 @@ const Practice = () => {
 
       if (error) throw error;
 
-      if (attemptNumber >= 1) {
-        const { error: progressError } = await supabase
-          .from("module_progress")
-          .update({
-            practice_completed: true
-          })
-          .eq("user_id", user.id)
-          .eq("module_id", moduleId);
+      const { error: progressError } = await supabase
+        .from("module_progress")
+        .update({
+          practice_completed: true
+        })
+        .eq("user_id", user.id)
+        .eq("module_id", moduleId);
 
-        if (progressError) throw progressError;
-      }
+      if (progressError) throw progressError;
 
       setIsComplete(true);
-      toast.success("প্র্যাকটিস সম্পন্ন হয়েছে!");
+
+      if (attemptNumber === 1) {
+        toast.success("প্র্যাকটিস সম্পন্ন! এখন চূড়ান্ত কুইজের জন্য প্রস্তুত");
+      } else {
+        toast.success(`প্র্যাকটিস ${attemptNumber} সম্পন্ন হয়েছে!`);
+      }
     } catch (error: any) {
       console.error("Error completing practice:", error);
       toast.error("সমস্যা হয়েছে");
@@ -181,6 +204,97 @@ const Practice = () => {
               className="bg-success hover:bg-success/90"
             >
               চূড়ান্ত কুইজ শুরু করুন
+            </Button>
+          </div>
+        </Card>
+      </div>
+    );
+  }
+
+  if (!hasStarted) {
+    const canPractice = practiceAttempts.length < 3;
+
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <Card className="max-w-2xl w-full p-8 space-y-6">
+          <div className="text-center space-y-4">
+            <div className="w-16 h-16 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mx-auto">
+              <CheckCircle className="w-8 h-8 text-green-600 dark:text-green-400" />
+            </div>
+            <h2 className="text-2xl md:text-3xl font-bold">প্র্যাকটিস সেশন</h2>
+            <p className="text-muted-foreground">{module?.title}</p>
+          </div>
+
+          <Card className="p-4 bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800">
+            <h3 className="font-semibold mb-2 flex items-center gap-2">
+              <AlertCircle className="w-5 h-5 text-blue-600" />
+              প্র্যাকটিসের উদ্দেশ্য:
+            </h3>
+            <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground">
+              <li>চূড়ান্ত কুইজের জন্য প্রস্তুতি নিন</li>
+              <li>ভুল উত্তরের জন্য সঠিক ব্যাখ্যা দেখুন</li>
+              <li>প্রতিবার অনন্য প্রশ্ন পাবেন</li>
+              <li>সর্বোচ্চ 3 বার প্র্যাকটিস করতে পারবেন</li>
+              <li>কমপক্ষে 1 বার প্র্যাকটিস বাধ্যতামূলক</li>
+            </ul>
+          </Card>
+
+          {practiceAttempts.length > 0 && (
+            <Card className="p-4 bg-muted/50">
+              <h3 className="font-semibold mb-2">পূর্ববর্তী প্র্যাকটিস:</h3>
+              <div className="space-y-2">
+                {practiceAttempts.map((attempt, index) => (
+                  <div key={attempt.id} className="flex items-center justify-between text-sm">
+                    <span>প্র্যাকটিস {attempt.attempt_number}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold">
+                        {attempt.score}/{attempt.total_questions}
+                      </span>
+                      <span className="text-muted-foreground">
+                        ({Math.round((attempt.score / attempt.total_questions) * 100)}%)
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          )}
+
+          <div className="space-y-3">
+            {canPractice ? (
+              <>
+                <Button onClick={() => setHasStarted(true)} className="w-full bg-green-600 hover:bg-green-700" size="lg">
+                  <CheckCircle className="w-5 h-5 mr-2" />
+                  প্র্যাকটিস শুরু করুন ({practiceAttempts.length + 1}/3)
+                </Button>
+                {practiceAttempts.length > 0 && (
+                  <Button
+                    onClick={() => navigate(`/quiz?moduleId=${moduleId}`)}
+                    className="w-full"
+                    variant="outline"
+                  >
+                    চূড়ান্ত কুইজে যান
+                  </Button>
+                )}
+              </>
+            ) : (
+              <div className="space-y-3">
+                <Card className="p-4 bg-yellow-50 dark:bg-yellow-950/20 border-yellow-200 dark:border-yellow-800">
+                  <p className="text-sm text-center">
+                    আপনি সর্বোচ্চ 3 বার প্র্যাকটিস সম্পন্ন করেছেন। এখন চূড়ান্ত কুইজে অংশগ্রহণ করুন।
+                  </p>
+                </Card>
+                <Button
+                  onClick={() => navigate(`/quiz?moduleId=${moduleId}`)}
+                  className="w-full"
+                  size="lg"
+                >
+                  চূড়ান্ত কুইজ শুরু করুন
+                </Button>
+              </div>
+            )}
+            <Button onClick={() => navigate("/learning")} variant="outline" className="w-full">
+              ফিরে যান
             </Button>
           </div>
         </Card>

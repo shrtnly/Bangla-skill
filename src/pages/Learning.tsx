@@ -150,7 +150,19 @@ const Learning = () => {
         await fetchModules(selectedCourseId!);
       }
 
-      navigate(`/chapter?moduleId=${module.id}`);
+      const progress = existingProgress || { learning_completed: false, practice_completed: false, quiz_passed: false };
+
+      if (!progress.learning_completed) {
+        navigate(`/chapter?moduleId=${module.id}`);
+      } else if (!progress.practice_completed) {
+        toast.info("শিক্ষা সম্পন্ন! এখন প্র্যাকটিস করুন");
+        navigate(`/practice?moduleId=${module.id}`);
+      } else if (!progress.quiz_passed) {
+        toast.info("প্র্যাকটিস সম্পন্ন! এখন চূড়ান্ত কুইজ দিন");
+        navigate(`/quiz?moduleId=${module.id}`);
+      } else {
+        toast.success("এই মডিউল ইতিমধ্যে সম্পন্ন হয়েছে");
+      }
     } catch (error: any) {
       console.error("Error starting module:", error);
       toast.error("মডিউল শুরু করতে সমস্যা হয়েছে");

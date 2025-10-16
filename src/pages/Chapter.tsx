@@ -113,6 +113,13 @@ const Chapter = () => {
     const currentChapter = chapters[selectedChapterIndex];
     if (!currentChapter) return;
 
+    const allPointsCompleted = learningPoints.every(point => completedPoints.includes(point.id));
+
+    if (!allPointsCompleted) {
+      toast.error("সব শেখার পয়েন্ট সম্পন্ন করুন");
+      return;
+    }
+
     try {
       const { error } = await supabase
         .from("chapter_progress")
@@ -144,6 +151,7 @@ const Chapter = () => {
         navigate(`/practice?moduleId=${moduleId}`);
       } else {
         setSelectedChapterIndex(selectedChapterIndex + 1);
+        setCompletedPoints([]);
       }
 
       await fetchModuleData();
