@@ -1,17 +1,19 @@
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { 
-  BookOpen, 
-  Award, 
-  Users, 
-  TrendingUp, 
+import {
+  BookOpen,
+  Award,
+  Users,
+  TrendingUp,
   Star,
   CheckCircle,
   Zap,
   Target,
   Trophy,
-  ArrowRight
+  ArrowRight,
+  Loader2
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -22,49 +24,67 @@ const Index = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
+  const [courses, setCourses] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const courses = [
-    {
-      id: 1,
-      title: "ডিজিটাল মার্কেটিং মাস্টারক্লাস",
-      category: "জনপ্রিয়",
-      badge: "trending",
-      students: 2847,
-      rating: 4.8,
-      modules: 12,
-      image: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&q=80"
-    },
-    {
-      id: 2,
-      title: "ওয়েব ডেভেলপমেন্ট সম্পূর্ণ গাইড",
-      category: "নতুন",
-      badge: "new",
-      students: 1523,
-      rating: 4.9,
-      modules: 15,
-      image: "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=800&q=80"
-    },
-    {
-      id: 3,
-      title: "গ্রাফিক্স ডিজাইন প্রফেশনাল",
-      category: "সেরা",
-      badge: "best",
-      students: 3421,
-      rating: 4.7,
-      modules: 10,
-      image: "https://images.unsplash.com/photo-1561070791-2526d30994b5?w=800&q=80"
-    },
-    {
-      id: 4,
-      title: "ডেটা সায়েন্স ফান্ডামেন্টাল",
-      category: "জনপ্রিয়",
-      badge: "trending",
-      students: 1876,
-      rating: 4.6,
-      modules: 14,
-      image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&q=80"
-    },
-  ];
+  useEffect(() => {
+    fetchCourses();
+  }, []);
+
+  const fetchCourses = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("courses")
+        .select("*")
+        .limit(4);
+
+      if (error) throw error;
+
+      setCourses(data || []);
+    } catch (error: any) {
+      console.error("Error fetching courses:", error);
+      setCourses([
+        {
+          id: "temp-1",
+          title: "ডিজিটাল মার্কেটিং মাস্টারক্লাস",
+          category: "জনপ্রিয়",
+          badge: "trending",
+          total_students: 2847,
+          rating: 4.8,
+          image_url: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&q=80"
+        },
+        {
+          id: "temp-2",
+          title: "ওয়েব ডেভেলপমেন্ট সম্পূর্ণ গাইড",
+          category: "নতুন",
+          badge: "new",
+          total_students: 1523,
+          rating: 4.9,
+          image_url: "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=800&q=80"
+        },
+        {
+          id: "temp-3",
+          title: "গ্রাফিক্স ডিজাইন প্রফেশনাল",
+          category: "সেরা",
+          badge: "best",
+          total_students: 3421,
+          rating: 4.7,
+          image_url: "https://images.unsplash.com/photo-1561070791-2526d30994b5?w=800&q=80"
+        },
+        {
+          id: "temp-4",
+          title: "ডেটা সায়েন্স ফান্ডামেন্টাল",
+          category: "জনপ্রিয়",
+          badge: "trending",
+          total_students: 1876,
+          rating: 4.6,
+          image_url: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&q=80"
+        },
+      ]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const features = [
     {
@@ -96,7 +116,7 @@ const Index = () => {
     { value: "৪.৮", label: "রেটিং" },
   ];
 
-  const handleEnroll = async (courseId: number) => {
+  const handleEnroll = async (courseId: string) => {
     if (!user) {
       toast({
         title: "লগইন প্রয়োজন",
@@ -108,6 +128,24 @@ const Index = () => {
     }
 
     try {
+      const { data: existing, error: checkError } = await supabase
+        .from("enrollments")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("course_id", courseId)
+        .maybeSingle();
+
+      if (checkError) throw checkError;
+
+      if (existing) {
+        toast({
+          title: "ইতিমধ্যে ভর্তি",
+          description: "আপনি ইতিমধ্যে এই কোর্সে ভর্তি হয়েছেন",
+        });
+        navigate("/learning");
+        return;
+      }
+
       const { error } = await supabase
         .from("enrollments")
         .insert({
@@ -183,61 +221,67 @@ const Index = () => {
           <p className="text-muted-foreground text-lg">আপনার ক্যারিয়ারের জন্য সেরা কোর্স বেছে নিন</p>
         </div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {courses.map((course, index) => (
-            <Card 
-              key={course.id} 
-              className="overflow-hidden card-hover cursor-pointer animate-slide-up"
-              style={{ animationDelay: `${index * 100}ms` }}
-              onClick={() => navigate("/dashboard")}
-            >
-              <div className="relative h-48">
-                <img 
-                  src={course.image} 
-                  alt={course.title}
-                  className="w-full h-full object-cover"
-                />
-                <Badge 
-                  className={`absolute top-3 right-3 ${
-                    course.badge === "trending" 
-                      ? "bg-accent" 
-                      : course.badge === "new" 
-                      ? "bg-primary" 
-                      : "bg-success"
-                  }`}
-                >
-                  {course.category}
-                </Badge>
-              </div>
-              <div className="p-5 space-y-3">
-                <h3 className="font-semibold text-lg line-clamp-2">{course.title}</h3>
-                <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                  <div className="flex items-center gap-1">
-                    <Users className="w-4 h-4" />
-                    {course.students}
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Star className="w-4 h-4 fill-accent text-accent" />
-                    {course.rating}
-                  </div>
-                </div>
-                <div className="flex items-center justify-between pt-2">
-                  <span className="text-sm text-muted-foreground">{course.modules} টি মডিউল</span>
-                  <Button
-                    size="sm"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleEnroll(course.id);
-                    }}
-                    className="bg-primary text-white hover:bg-primary/90"
+        {loading ? (
+          <div className="flex justify-center py-12">
+            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          </div>
+        ) : (
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {courses.map((course, index) => (
+              <Card
+                key={course.id}
+                className="overflow-hidden card-hover cursor-pointer animate-slide-up"
+                style={{ animationDelay: `${index * 100}ms` }}
+                onClick={() => navigate("/dashboard")}
+              >
+                <div className="relative h-48">
+                  <img
+                    src={course.image_url || "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&q=80"}
+                    alt={course.title}
+                    className="w-full h-full object-cover"
+                  />
+                  <Badge
+                    className={`absolute top-3 right-3 ${
+                      course.badge === "trending"
+                        ? "bg-accent"
+                        : course.badge === "new"
+                        ? "bg-primary"
+                        : "bg-success"
+                    }`}
                   >
-                    ভর্তি হন
-                  </Button>
+                    {course.category || "কোর্স"}
+                  </Badge>
                 </div>
-              </div>
-            </Card>
-          ))}
-        </div>
+                <div className="p-5 space-y-3">
+                  <h3 className="font-semibold text-lg line-clamp-2">{course.title}</h3>
+                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                    <div className="flex items-center gap-1">
+                      <Users className="w-4 h-4" />
+                      {course.total_students || 0}
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Star className="w-4 h-4 fill-accent text-accent" />
+                      {course.rating || 0}
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between pt-2">
+                    <span className="text-sm text-muted-foreground">কোর্স</span>
+                    <Button
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleEnroll(course.id);
+                      }}
+                      className="bg-primary text-white hover:bg-primary/90"
+                    >
+                      ভর্তি হন
+                    </Button>
+                  </div>
+                </div>
+              </Card>
+            ))}
+          </div>
+        )}
       </section>
 
       {/* Features Section */}
