@@ -24,6 +24,8 @@ const Quiz = () => {
   const [selectedAnswers, setSelectedAnswers] = useState<Record<number, string>>({});
   const [isComplete, setIsComplete] = useState(false);
   const [finalScore, setFinalScore] = useState(0);
+  const [hasPremium, setHasPremium] = useState(false);
+  const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
 
   useEffect(() => {
     if (moduleId && user) {
@@ -56,6 +58,11 @@ const Quiz = () => {
   const fetchQuizData = async () => {
     try {
       setLoading(true);
+
+      const { data: premiumCheck } = await supabase
+        .rpc("has_active_premium_subscription", { user_id_input: user?.id });
+
+      setHasPremium(premiumCheck || false);
 
       const { data: moduleData, error: moduleError } = await supabase
         .from("modules")
@@ -109,16 +116,20 @@ const Quiz = () => {
   };
 
   const canTakeQuiz = () => {
-    if (quizAttempts.length === 0) return { allowed: true, reason: "" };
+    if (hasPremium) {
+      return { allowed: true, reason: "", isPremium: true };
+    }
+
+    if (quizAttempts.length === 0) return { allowed: true, reason: "", isPremium: false };
 
     const passedAttempt = quizAttempts.find(a => a.passed);
     if (passedAttempt) {
-      return { allowed: false, reason: "আপনি ইতিমধ্যে এই কুইজ পাস করেছেন" };
+      return { allowed: false, reason: "আপনি ইতিমধ্যে এই কুইজ পাস করেছেন", isPremium: false };
     }
 
     const freeAttempts = module?.max_free_attempts || 2;
     if (quizAttempts.length < freeAttempts) {
-      return { allowed: true, reason: "" };
+      return { allowed: true, reason: "", isPremium: false };
     }
 
     const lastAttempt = quizAttempts[0];
@@ -129,11 +140,14 @@ const Quiz = () => {
       const hoursLeft = Math.ceil((canRetakeAt.getTime() - now.getTime()) / (1000 * 60 * 60));
       return {
         allowed: false,
-        reason: `আবার চেষ্টা করতে আরও ${hoursLeft} ঘন্টা অপেক্ষা করুন`
+        reason: `আবার চেষ্টা করতে আরও ${hoursLeft} ঘন্টা অপেক্ষা করুন`,
+        isPremium: false,
+        canUpgrade: true,
+        hoursLeft
       };
     }
 
-    return { allowed: true, reason: "" };
+    return { allowed: true, reason: "", isPremium: false };
   };
 
   const startQuiz = () => {
@@ -315,8 +329,16 @@ const Quiz = () => {
               <ul className="list-disc list-inside space-y-1 text-sm">
                 <li>মোট প্রশ্ন: {questions.length} টি</li>
                 <li>পাসিং স্কোর: {module?.passing_score || 70}%</li>
-                <li>ফ্রি প্রচেষ্টা: {module?.max_free_attempts || 2} বার</li>
-                <li>ব্যর্থ হলে অপেক্ষা: {module?.retake_wait_hours || 24} ঘন্টা</li>
+                {hasPremium ? (
+                  <li className="text-green-600 font-semibold">
+                    ✓ প্রিমিয়াম: সীমাহীন প্রচেষ্টা - কোনো অপেক্ষার সময় নেই
+                  </li>
+                ) : (
+                  <>
+                    <li>ফ্রি প্রচেষ্টা: {module?.max_free_attempts || 2} বার</li>
+                    <li>ব্যর্থ হলে অপেক্ষা: {module?.retake_wait_hours || 24} ঘন্টা</li>
+                  </>
+                )}
                 <li>কুইজ চলাকালীন অন্য ট্যাব খোলা যাবে না</li>
                 <li>একবার শুরু করলে মাঝপথে ছাড়া যাবে না</li>
               </ul>
@@ -347,12 +369,72 @@ const Quiz = () => {
           )}
 
           {!check.allowed ? (
-            <Alert variant="destructive">
-              <AlertTriangle className="w-4 h-4" />
-              <AlertDescription>{check.reason}</AlertDescription>
-            </Alert>
+            <>
+              <Alert variant="destructive">
+                <AlertTriangle className="w-4 h-4" />
+                <AlertDescription>{check.reason}</AlertDescription>
+              </Alert>
+
+              {check.canUpgrade && (
+                <Card className="p-6 bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-950/20 dark:to-orange-950/20 border-amber-300 dark:border-amber-700">
+                  <div className="flex items-start gap-4 mb-4">
+                    <div className="w-12 h-12 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center flex-shrink-0">
+                      <Trophy className="w-6 h-6 text-amber-600 dark:text-amber-400" />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-lg mb-1">অপেক্ষা এড়িয়ে যান!</h3>
+                      <p className="text-sm text-muted-foreground mb-3">
+                        প্রিমিয়াম সাবস্ক্রিপশন নিয়ে সীমাহীন কুইজ প্রচেষ্টা পান - কোনো অপেক্ষার সময় ছাড়াই!
+                      </p>
+                      <ul className="text-sm space-y-1 mb-4">
+                        <li className="flex items-center gap-2">
+                          <CheckCircle className="w-4 h-4 text-green-600" />
+                          <span>সীমাহীন কুইজ প্রচেষ্টা</span>
+                        </li>
+                        <li className="flex items-center gap-2">
+                          <CheckCircle className="w-4 h-4 text-green-600" />
+                          <span>কোনো অপেক্ষার সময় নেই</span>
+                        </li>
+                        <li className="flex items-center gap-2">
+                          <CheckCircle className="w-4 h-4 text-green-600" />
+                          <span>সব কোর্সে অ্যাক্সেস</span>
+                        </li>
+                        <li className="flex items-center gap-2">
+                          <CheckCircle className="w-4 h-4 text-green-600" />
+                          <span>অগ্রাধিকার সহায়তা</span>
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <Button
+                      className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white"
+                      onClick={() => {
+                        toast.info("প্রিমিয়াম আপগ্রেড ফিচার শীঘ্রই আসছে");
+                      }}
+                    >
+                      <Trophy className="w-4 h-4 mr-2" />
+                      প্রিমিয়াম নিন
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => navigate("/learning")}
+                    >
+                      পরে করব
+                    </Button>
+                  </div>
+                </Card>
+              )}
+            </>
           ) : (
             <div className="space-y-3">
+              {hasPremium && (
+                <Badge className="w-full justify-center py-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white">
+                  <Trophy className="w-4 h-4 mr-2" />
+                  প্রিমিয়াম সদস্য - সীমাহীন প্রচেষ্টা
+                </Badge>
+              )}
               <Button onClick={startQuiz} className="w-full" size="lg">
                 <Trophy className="w-5 h-5 mr-2" />
                 কুইজ শুরু করুন
