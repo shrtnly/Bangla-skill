@@ -29,7 +29,6 @@ const Chapter = () => {
   const [learningPoints, setLearningPoints] = useState<any[]>([]);
   const [completedPoints, setCompletedPoints] = useState<string[]>([]);
   const [chapterProgress, setChapterProgress] = useState<any[]>([]);
-  const [learningPointProgress, setLearningPointProgress] = useState<any[]>([]);
 
   useEffect(() => {
     if (moduleId) {
@@ -73,15 +72,6 @@ const Chapter = () => {
 
         if (progressError) throw progressError;
         setChapterProgress(progressData || []);
-
-        // Fetch learning point progress
-        const { data: pointProgressData, error: pointProgressError } = await supabase
-          .from("learning_point_progress")
-          .select("*")
-          .eq("user_id", user.id);
-
-        if (pointProgressError) throw pointProgressError;
-        setLearningPointProgress(pointProgressData || []);
       }
     } catch (error: any) {
       console.error("Error fetching module data:", error);
@@ -101,19 +91,6 @@ const Chapter = () => {
 
       if (error) throw error;
       setLearningPoints(data || []);
-
-      // Set completed points based on fetched progress
-      if (user && data) {
-        const completedPointIds = data
-          .filter(point => 
-            learningPointProgress.some(p => 
-              p.learning_point_id === point.id && p.completed
-            )
-          )
-          .map(point => point.id);
-        
-        setCompletedPoints(completedPointIds);
-      }
     } catch (error: any) {
       console.error("Error fetching learning points:", error);
       toast.error("শিক্ষা পয়েন্ট লোড করতে সমস্যা হয়েছে");
@@ -124,31 +101,9 @@ const Chapter = () => {
     return chapterProgress.some(p => p.chapter_id === chapterId && p.completed);
   };
 
-  const markPointCompleted = async (pointId: string) => {
-    if (!user) return;
-
-    try {
-      // Update database
-      const { error } = await supabase
-        .from("learning_point_progress")
-        .upsert({
-          user_id: user.id,
-          learning_point_id: pointId,
-          completed: true,
-          completed_at: new Date().toISOString()
-        });
-
-      if (error) throw error;
-
-      // Update local state
-      if (!completedPoints.includes(pointId)) {
-        setCompletedPoints([...completedPoints, pointId]);
-      }
-
-      toast.success("পয়েন্ট সম্পন্ন হিসেবে চিহ্নিত করা হয়েছে");
-    } catch (error: any) {
-      console.error("Error marking point as completed:", error);
-      toast.error("সমস্যা হয়েছে");
+  const markPointCompleted = (pointId: string) => {
+    if (!completedPoints.includes(pointId)) {
+      setCompletedPoints([...completedPoints, pointId]);
     }
   };
 
@@ -178,17 +133,6 @@ const Chapter = () => {
       if (error) throw error;
 
       toast.success("অধ্যায় সম্পন্ন হয়েছে!");
-
-      // Update local state
-      setChapterProgress(prev => [
-        ...prev.filter(p => p.chapter_id !== currentChapter.id),
-        {
-          user_id: user.id,
-          chapter_id: currentChapter.id,
-          completed: true,
-          completed_at: new Date().toISOString()
-        }
-      ]);
 
       const allChaptersComplete = selectedChapterIndex === chapters.length - 1;
 
@@ -331,7 +275,7 @@ const Chapter = () => {
                               className="mt-3"
                             >
                               <CheckCircle className="w-4 h-4 mr-2" />
-                              সম্পন্ন হিসেবে চিহ্নিত কর�uন
+                              সম্পন্ন হিসেবে চিহ্নিত করুন
                             </Button>
                           )}
                         </div>
