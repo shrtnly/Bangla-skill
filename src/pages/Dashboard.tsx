@@ -3,23 +3,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import {
-  BookOpen,
-  Trophy,
-  Star,
-  TrendingUp,
-  Award,
-  Target,
-  Clock,
-  CheckCircle,
-  Lock,
-  Play,
-  LogOut,
-  User,
-  Settings,
-  Moon,
-  Sun
-} from "lucide-react";
+import { BookOpen, Trophy, Star, TrendingUp, Award, Target, Clock, CircleCheck as CheckCircle, Lock, Play, LogOut, User, Settings, Moon, Sun } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";

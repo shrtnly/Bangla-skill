@@ -3,14 +3,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import {
-  CheckCircle,
-  ArrowLeft,
-  ChevronRight,
-  ChevronLeft,
-  Loader2,
-  BookOpen
-} from "lucide-react";
+import { CircleCheck as CheckCircle, ArrowLeft, ChevronRight, ChevronLeft, Loader as Loader2, BookOpen } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
