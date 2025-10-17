@@ -1,15 +1,17 @@
-// /src/pages/Learning.tsx
 import { useEffect, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { Badge } from "@/components/ui/badge";
-import { BookOpen, CheckCircle, Lock, ChevronRight, Play, ArrowLeft, Loader2, Clock, Award } from "lucide-react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { ArrowLeft, CheckCircle, Lock, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { toast } from "sonner";
 import { useLearningProgress } from "@/hooks/useLearningProgress";
+import { toast } from "sonner";
+import type { Tables } from "@/types/supabase";
+
+type Chapter = Tables<"chapters">;
+type Module = Tables<"modules">;
 
 const Learning = () => {
   const navigate = useNavigate();
@@ -17,226 +19,98 @@ const Learning = () => {
   const [searchParams] = useSearchParams();
   const courseId = searchParams.get("courseId");
 
-  const { progress, fetchFullProgress, isChapterCompleted, markChapterComplete } = useLearningProgress();
+  const { progress, fetchFullProgress, isChapterCompleted, markChapterComplete, getModuleProgress } = useLearningProgress();
 
   const [loading, setLoading] = useState(true);
-  const [selectedModuleId, setSelectedModuleId] = useState<string | null>(null);
-  const [chapters, setChapters] = useState<any[]>([]);
-  const [selectedModule, setSelectedModule] = useState<any | null>(null);
+  const [selectedModule, setSelectedModule] = useState<Module | null>(null);
+  const [chapters, setChapters] = useState<Chapter[]>([]);
 
-  // fetch modules + progress
   useEffect(() => {
     (async () => {
-      setLoading(true);
-      try {
-        if (user) {
-          await fetchFullProgress(courseId || undefined);
-        }
-      } finally {
+      if (user && courseId) {
+        await fetchFullProgress(courseId);
         setLoading(false);
       }
     })();
   }, [user, courseId, fetchFullProgress]);
 
-  // set default selected module when modules are loaded
   useEffect(() => {
     if (progress.modules.length > 0) {
-      const firstModule = progress.modules[0];
-      setSelectedModuleId(firstModule.id);
+      const first = progress.modules[0];
+      setSelectedModule(first);
+      const related = progress.chapters.filter((c) => c.module_id === first.id);
+      setChapters(related);
     }
-  }, [progress.modules]);
+  }, [progress]);
 
-  // load chapters for selected module
-  useEffect(() => {
-    const loadChapters = async () => {
-      if (!selectedModuleId) return;
-      try {
-        setLoading(true);
-        const { data: chaptersData } = await supabase
-          .from("chapters")
-          .select("*")
-          .eq("module_id", selectedModuleId)
-          .order("order_index");
-        setChapters(chaptersData || []);
-        setSelectedModule(progress.modules.find((m:any) => m.id === selectedModuleId) || null);
-      } catch (err) {
-        console.error("fetch chapters", err);
-        toast.error("অধ্যায় লোড করতে ব্যর্থ হয়েছে");
-      } finally {
-        setLoading(false);
-      }
-    };
-    loadChapters();
-  }, [selectedModuleId, progress.modules]);
-
-  const getModuleProgress = (moduleId: string) => {
-    const entry = progress.moduleProgress.find((p:any) => p.module_id === moduleId);
-    return entry || null;
+  const handleStartChapter = (chapter: Chapter) => {
+    navigate(`/chapter?moduleId=${chapter.module_id}&chapterId=${chapter.id}`);
   };
 
-  const isChapterLocked = (index: number) => {
-    if (index === 0) return false;
-    const prevChapter = chapters[index - 1];
-    return !isChapterCompleted(prevChapter.id);
-  };
-
-  const handleStartChapter = (chapter: any) => {
-    // navigate to chapter page — do not auto-mark complete here
-    navigate(`/chapter?moduleId=${selectedModuleId}&chapterId=${chapter.id}`);
-  };
-
-  const handleMarkChapterComplete = async (chapter: any) => {
-    if (!user) return;
-    try {
-      const res = await markChapterComplete(chapter.id, selectedModuleId || undefined);
-      if (res.success) {
-        toast.success("অধ্যায় সম্পন্ন হয়েছে");
-        await fetchFullProgress(courseId || undefined);
-      } else {
-        toast.error("অপস! চেষ্টা করুন আবার");
-      }
-    } catch (err) {
-      console.error(err);
-      toast.error("সমস্যা হয়েছে");
-    }
+  const handleComplete = async (chapter: Chapter) => {
+    await markChapterComplete(chapter.id);
+    toast.success("অধ্যায় সম্পন্ন হয়েছে");
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="animate-spin" />
       </div>
     );
   }
 
-  if (!progress.modules || progress.modules.length === 0) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <Card className="p-8 text-center">
-          <BookOpen className="w-12 h-12 mx-auto text-muted-foreground" />
-          <p className="text-muted-foreground mt-4">কোর্স বা মডিউল পাওয়া যায়নি</p>
-          <Button onClick={() => navigate("/dashboard")}>ড্যাশবোর্ড</Button>
-        </Card>
-      </div>
-    );
+  if (!selectedModule) {
+    return <div className="p-6">No module found.</div>;
   }
 
-  const selectedModuleProgress = getModuleProgress(selectedModuleId || "");
-
-  // compute module-level progress by chapters
-  const completedChaptersCount = chapters.filter((c) => isChapterCompleted(c.id)).length;
-  const moduleProgressPct = chapters.length > 0 ? Math.round((completedChaptersCount / chapters.length) * 100) : 0;
+  const moduleProgress = getModuleProgress(selectedModule.id);
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b bg-card/50 backdrop-blur-sm sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" onClick={() => navigate("/dashboard")}>
-              <ArrowLeft className="w-5 h-5" />
-            </Button>
-            <div>
-              <h1 className="font-bold text-base md:text-lg">{selectedModule?.title || "মডিউল"}</h1>
-              <p className="text-xs md:text-sm text-muted-foreground">
-                অধ্যায় সমূহ: {chapters.length}
-              </p>
-            </div>
-          </div>
-
-          <div>
-            <div className="text-xs text-muted-foreground">মডিউল অগ্রগতি</div>
-            <div className="font-bold text-sm md:text-lg">{moduleProgressPct}%</div>
-          </div>
+      <header className="p-4 border-b flex justify-between items-center">
+        <Button variant="ghost" size="icon" onClick={() => navigate("/dashboard")}>
+          <ArrowLeft className="w-5 h-5" />
+        </Button>
+        <div>
+          <h1 className="font-bold text-lg">{selectedModule.title}</h1>
+          <p className="text-xs text-muted-foreground">অগ্রগতি: {moduleProgress}%</p>
         </div>
       </header>
 
-      <div className="container mx-auto px-4 py-6">
-        <div className="grid lg:grid-cols-[320px,1fr] gap-6">
-          <div>
-            <h2 className="text-lg font-bold mb-3">মডিউলসমূহ</h2>
-            <div className="space-y-3">
-              {progress.modules.map((m:any, idx:number) => {
-                const isSelected = m.id === selectedModuleId;
-                const unlocked = idx === 0 || getModuleProgress(progress.modules[idx - 1]?.id)?.quiz_passed;
-                return (
-                  <Card key={m.id} className={`p-3 ${isSelected ? "border-primary border-2" : "hover:shadow-md cursor-pointer"}`} onClick={() => setSelectedModuleId(m.id)}>
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <div className="font-semibold text-sm">{m.title}</div>
-                        <div className="text-xs text-muted-foreground">{m.points || 0} পয়েন্ট • {m.duration_minutes || 30} মিনিট</div>
-                      </div>
-                      <div className="text-sm">{unlocked ? <Play className="w-5 h-5 text-primary" /> : <Lock className="w-5 h-5 text-muted-foreground" />}</div>
-                    </div>
-                  </Card>
-                );
-              })}
-            </div>
-          </div>
+      <div className="p-6 space-y-4">
+        {chapters.map((c, idx) => {
+          const completed = isChapterCompleted(c.id);
+          const locked = idx > 0 && !isChapterCompleted(chapters[idx - 1].id);
+          return (
+            <Card key={c.id} className="p-4 flex justify-between items-center">
+              <div>
+                <h3 className="font-semibold">{c.title}</h3>
+                <p className="text-sm text-muted-foreground">{c.duration} মিনিট</p>
+              </div>
 
-          <div>
-            <Card className="p-6 mb-4">
-              <Badge className="mb-2">{selectedModuleProgress?.status === "completed" ? "সম্পন্ন" : selectedModuleProgress ? "চলমান" : "নতুন"}</Badge>
-              <h3 className="text-xl font-semibold mb-2">{selectedModule?.title}</h3>
-              <p className="text-muted-foreground mb-3">{selectedModule?.description}</p>
-              <Progress value={moduleProgressPct} className="h-3" />
-              <div className="mt-3 text-sm">{completedChaptersCount}/{chapters.length} অধ্যায় সম্পন্ন</div>
+              <div>
+                {completed ? (
+                  <Button variant="ghost" className="text-green-600">
+                    সম্পন্ন
+                    <CheckCircle className="ml-2 w-4 h-4" />
+                  </Button>
+                ) : locked ? (
+                  <Button variant="outline" disabled>
+                    <Lock className="mr-2 w-4 h-4" /> লক করা
+                  </Button>
+                ) : (
+                  <>
+                    <Button onClick={() => handleStartChapter(c)}>শুরু করুন</Button>
+                    <Button variant="outline" onClick={() => handleComplete(c)}>
+                      সম্পন্ন
+                    </Button>
+                  </>
+                )}
+              </div>
             </Card>
-
-            <div className="space-y-3">
-              {chapters.map((chapter:any, idx:number) => {
-                const completed = isChapterCompleted(chapter.id);
-                const locked = isChapterLocked(idx);
-                return (
-                  <Card key={chapter.id} className={`p-4 flex items-center justify-between ${completed ? "bg-success/5" : locked ? "opacity-60" : ""}`}>
-                    <div>
-                      <div className="font-semibold">{chapter.title}</div>
-                      <div className="text-xs text-muted-foreground">{chapter.duration_minutes || 10} মিনিট</div>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      {!completed && !locked && (
-                        <>
-                          <Button variant="outline" onClick={() => handleStartChapter(chapter)}>
-                            শুরু করুন
-                          </Button>
-                          <Button onClick={() => handleMarkChapterComplete(chapter)}>
-                            সম্পন্ন করুন
-                          </Button>
-                        </>
-                      )}
-
-                      {completed && (
-                        <Button variant="ghost" className="text-success">
-                          সম্পন্ন হয়েছে
-                        </Button>
-                      )}
-
-                      {locked && (
-                        <Button variant="ghost" disabled>
-                          লক করা
-                        </Button>
-                      )}
-                    </div>
-                  </Card>
-                );
-              })}
-            </div>
-
-            {selectedModule && (
-              <Card className="p-4 mt-6">
-                <h4 className="font-semibold mb-2">প্র্যাকটিস ও কুইজ</h4>
-                <div className="flex gap-3">
-                  <Button className="flex-1" onClick={() => navigate(`/practice?moduleId=${selectedModuleId}`)} disabled={!selectedModuleProgress?.learning_completed}>
-                    প্র্যাকটিস
-                  </Button>
-                  <Button variant="outline" className="flex-1" onClick={() => navigate(`/quiz?moduleId=${selectedModuleId}`)} disabled={!selectedModuleProgress?.practice_completed}>
-                    চূড়ান্ত কুইজ
-                  </Button>
-                </div>
-              </Card>
-            )}
-          </div>
-        </div>
+          );
+        })}
       </div>
     </div>
   );
