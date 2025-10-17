@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -9,7 +9,7 @@ import {
   ChevronRight,
   ChevronLeft,
   Loader2,
-  BookOpen
+  BookOpen,
 } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -27,23 +27,13 @@ const Chapter = () => {
   const [chapters, setChapters] = useState<any[]>([]);
   const [selectedChapterIndex, setSelectedChapterIndex] = useState(0);
   const [learningPoints, setLearningPoints] = useState<any[]>([]);
-  const [completedPoints, setCompletedPoints] = useState<string[]>([]);
+  const [completedPoints, setCompletedPoints] = useState<Record<string, string[]>>({});
   const [chapterProgress, setChapterProgress] = useState<any[]>([]);
+  const [isMarking, setIsMarking] = useState(false);
 
-  useEffect(() => {
-    if (moduleId) {
-      fetchModuleData();
-    }
-  }, [moduleId]);
-
-  useEffect(() => {
-    if (chapters.length > 0 && chapters[selectedChapterIndex]) {
-      fetchLearningPoints(chapters[selectedChapterIndex].id);
-      setCompletedPoints([]); // reset point progress when switching chapters
-    }
-  }, [selectedChapterIndex, chapters]);
-
-  const fetchModuleData = async () => {
+  // ---------------- FETCH MODULE + CHAPTERS ----------------
+  const fetchModuleData = useCallback(async () => {
+    if (!moduleId) return;
     try {
       setLoading(true);
 
@@ -52,7 +42,6 @@ const Chapter = () => {
         .select("*")
         .eq("id", moduleId)
         .single();
-
       if (moduleError) throw moduleError;
       setModule(moduleData);
 
@@ -60,8 +49,7 @@ const Chapter = () => {
         .from("chapters")
         .select("*")
         .eq("module_id", moduleId)
-        .order("order_index");
-
+        .order("order_index", { ascending: true });
       if (chaptersError) throw chaptersError;
       setChapters(chaptersData || []);
 
@@ -70,7 +58,6 @@ const Chapter = () => {
           .from("chapter_progress")
           .select("*")
           .eq("user_id", user.id);
-
         if (progressError) throw progressError;
         setChapterProgress(progressData || []);
       }
@@ -80,24 +67,40 @@ const Chapter = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [moduleId, user]);
 
-  const fetchLearningPoints = async (chapterId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from("learning_points")
-        .select("*")
-        .eq("chapter_id", chapterId)
-        .order("order_index");
+  useEffect(() => {
+    fetchModuleData();
+  }, [fetchModuleData]);
 
-      if (error) throw error;
-      setLearningPoints(data || []);
-    } catch (error: any) {
-      console.error("Error fetching learning points:", error);
-      toast.error("শিক্ষা পয়েন্ট লোড করতে সমস্যা হয়েছে");
+  // ---------------- FETCH LEARNING POINTS ----------------
+  const fetchLearningPoints = useCallback(
+    async (chapterId: string) => {
+      if (!chapterId) return;
+      try {
+        const { data, error } = await supabase
+          .from("learning_points")
+          .select("*")
+          .eq("chapter_id", chapterId)
+          .order("order_index", { ascending: true });
+        if (error) throw error;
+        setLearningPoints(data || []);
+      } catch (error: any) {
+        console.error("Error fetching learning points:", error);
+        toast.error("শিক্ষা পয়েন্ট লোড করতে সমস্যা হয়েছে");
+      }
+    },
+    []
+  );
+
+  useEffect(() => {
+    const current = chapters[selectedChapterIndex];
+    if (current?.id) {
+      fetchLearningPoints(current.id);
     }
-  };
+  }, [selectedChapterIndex, chapters, fetchLearningPoints]);
 
+  // ---------------- PROGRESS HELPERS ----------------
   const isChapterCompleted = (chapterId: string) => {
     return chapterProgress.some(
       (p) => p.chapter_id === chapterId && p.completed
@@ -105,19 +108,30 @@ const Chapter = () => {
   };
 
   const markPointCompleted = (pointId: string) => {
-    if (!completedPoints.includes(pointId)) {
-      setCompletedPoints([...completedPoints, pointId]);
-    }
+    const currentChapter = chapters[selectedChapterIndex];
+    if (!currentChapter) return;
+    setCompletedPoints((prev) => {
+      const currentList = prev[currentChapter.id] || [];
+      if (currentList.includes(pointId)) return prev;
+      return {
+        ...prev,
+        [currentChapter.id]: [...currentList, pointId],
+      };
+    });
   };
 
+  // ---------------- MARK CHAPTER COMPLETE ----------------
   const markChapterComplete = async () => {
-    if (!user) return;
+    if (!user) {
+      toast.error("দয়া করে লগইন করুন");
+      return;
+    }
 
     const currentChapter = chapters[selectedChapterIndex];
     if (!currentChapter) return;
 
     const allPointsCompleted = learningPoints.every((point) =>
-      completedPoints.includes(point.id)
+      (completedPoints[currentChapter.id] || []).includes(point.id)
     );
 
     if (!allPointsCompleted) {
@@ -126,6 +140,8 @@ const Chapter = () => {
     }
 
     try {
+      setIsMarking(true);
+
       const { error } = await supabase.from("chapter_progress").upsert({
         user_id: user.id,
         chapter_id: currentChapter.id,
@@ -136,33 +152,49 @@ const Chapter = () => {
       if (error) throw error;
 
       toast.success("অধ্যায় সম্পন্ন হয়েছে!");
+      // Refresh progress
+      const { data: newProgress } = await supabase
+        .from("chapter_progress")
+        .select("*")
+        .eq("user_id", user.id);
+      setChapterProgress(newProgress || []);
 
-      await fetchModuleData(); // Refresh chapter progress
-
+      // Check if all chapters completed
       const allChaptersComplete = chapters.every((c) =>
-        chapterProgress.some(
-          (p) => p.chapter_id === c.id && p.completed === true
-        )
+        newProgress?.some((p) => p.chapter_id === c.id && p.completed)
       );
 
       if (allChaptersComplete) {
         const { error: moduleError } = await supabase
           .from("module_progress")
-          .update({ learning_completed: true })
-          .eq("user_id", user.id)
-          .eq("module_id", moduleId);
-
+          .upsert(
+            {
+              user_id: user.id,
+              module_id: moduleId,
+              completed: true,
+              completed_at: new Date().toISOString(),
+            },
+            { onConflict: "user_id,module_id" }
+          );
         if (moduleError) throw moduleError;
 
         toast.success("সব অধ্যায় সম্পন্ন! এখন প্র্যাকটিস করুন");
         navigate(`/practice?moduleId=${moduleId}`);
+      } else {
+        // Move to next chapter if available
+        if (selectedChapterIndex < chapters.length - 1) {
+          setSelectedChapterIndex((i) => i + 1);
+        }
       }
     } catch (error: any) {
       console.error("Error marking chapter complete:", error);
       toast.error("সমস্যা হয়েছে");
+    } finally {
+      setIsMarking(false);
     }
   };
 
+  // ---------------- LOADING STATE ----------------
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -178,12 +210,17 @@ const Chapter = () => {
   const progress =
     chapters.length > 0 ? (completedChapters / chapters.length) * 100 : 0;
 
+  // ---------------- UI RENDER ----------------
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b bg-card/50 backdrop-blur-sm sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" onClick={() => navigate(`/learning`)}>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => navigate(`/learning`)}
+            >
               <ArrowLeft className="w-5 h-5" />
             </Button>
             <div>
@@ -195,14 +232,16 @@ const Chapter = () => {
           </div>
           <div className="text-right">
             <div className="text-xs text-muted-foreground">অগ্রগতি</div>
-            <div className="font-bold text-sm md:text-lg">{Math.round(progress)}%</div>
+            <div className="font-bold text-sm md:text-lg">
+              {Math.round(progress)}%
+            </div>
           </div>
         </div>
       </header>
 
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto space-y-6">
-          {/* Module and Progress Header */}
+          {/* Progress Summary */}
           <Card className="p-6 space-y-4">
             <div className="flex items-start justify-between">
               <div className="space-y-2">
@@ -219,15 +258,12 @@ const Chapter = () => {
             </div>
 
             <Progress value={progress} className="h-2" />
-
-            <div className="flex items-center gap-6 text-sm text-muted-foreground">
-              <div>
-                {completedChapters}/{chapters.length} অধ্যায় সম্পন্ন
-              </div>
+            <div className="text-sm text-muted-foreground">
+              {completedChapters}/{chapters.length} অধ্যায় সম্পন্ন
             </div>
           </Card>
 
-          {/* Learning Content */}
+          {/* Learning Points */}
           <Card className="p-6 md:p-8 space-y-6">
             <div className="flex items-center gap-3 mb-6">
               <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
@@ -237,15 +273,16 @@ const Chapter = () => {
             </div>
 
             {learningPoints.length === 0 ? (
-              <div className="text-center py-12">
-                <p className="text-muted-foreground">
-                  এই অধ্যায়ে কোনো শেখার পয়েন্ট নেই
-                </p>
+              <div className="text-center py-12 text-muted-foreground">
+                এই অধ্যায়ে কোনো শেখার পয়েন্ট নেই
               </div>
             ) : (
               <div className="space-y-6">
                 {learningPoints.map((point, index) => {
-                  const isCompleted = completedPoints.includes(point.id);
+                  const isCompleted =
+                    (completedPoints[currentChapter?.id] || []).includes(
+                      point.id
+                    );
 
                   return (
                     <div
@@ -267,23 +304,24 @@ const Chapter = () => {
                           {isCompleted ? (
                             <CheckCircle className="w-5 h-5" />
                           ) : (
-                            <span className="font-bold text-sm">{index + 1}</span>
+                            <span className="font-bold text-sm">
+                              {index + 1}
+                            </span>
                           )}
                         </div>
 
                         <div className="flex-1 space-y-3">
-                          <h4 className="font-semibold text-lg">{point.title}</h4>
-                          <div className="prose prose-sm max-w-none dark:prose-invert">
-                            <p className="text-muted-foreground leading-relaxed">
-                              {point.content}
-                            </p>
-                          </div>
+                          <h4 className="font-semibold text-lg">
+                            {point.title}
+                          </h4>
+                          <p className="text-muted-foreground leading-relaxed">
+                            {point.content}
+                          </p>
 
                           {!isCompleted && (
                             <Button
                               size="sm"
                               onClick={() => markPointCompleted(point.id)}
-                              className="mt-3"
                             >
                               <CheckCircle className="w-4 h-4 mr-2" />
                               সম্পন্ন হিসেবে চিহ্নিত করুন
@@ -298,7 +336,7 @@ const Chapter = () => {
             )}
           </Card>
 
-          {/* Navigation and Completion Buttons */}
+          {/* Navigation */}
           <div className="flex items-center justify-between gap-4">
             <Button
               variant="outline"
@@ -315,9 +353,16 @@ const Chapter = () => {
               <Button
                 onClick={markChapterComplete}
                 className="bg-success hover:bg-success/90"
+                disabled={isMarking}
               >
-                অধ্যায় সম্পন্ন করুন
-                <CheckCircle className="w-4 h-4 ml-2" />
+                {isMarking ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <>
+                    অধ্যায় সম্পন্ন করুন
+                    <CheckCircle className="w-4 h-4 ml-2" />
+                  </>
+                )}
               </Button>
 
               {selectedChapterIndex < chapters.length - 1 && (
