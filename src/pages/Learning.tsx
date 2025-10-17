@@ -233,73 +233,6 @@ const Learning = () => {
     return isChapterCompleted(previousChapter?.id) ? "unlocked" : "locked";
   };
 
-  // Function to mark a chapter as completed
-  const markChapterAsCompleted = async (chapterId: string) => {
-    if (!user) return;
-    
-    try {
-      // Check if progress already exists
-      const existingProgress = chapterProgress.find(p => p.chapter_id === chapterId);
-      
-      if (!existingProgress) {
-        // Create new progress record
-        const { error } = await supabase
-          .from("chapter_progress")
-          .insert({
-            user_id: user.id,
-            chapter_id: chapterId,
-            completed: true,
-            completed_at: new Date().toISOString()
-          });
-          
-        if (error) throw error;
-      } else {
-        // Update existing progress record
-        const { error } = await supabase
-          .from("chapter_progress")
-          .update({
-            completed: true,
-            completed_at: new Date().toISOString()
-          })
-          .eq("user_id", user.id)
-          .eq("chapter_id", chapterId);
-          
-        if (error) throw error;
-      }
-      
-      // Refresh chapter progress
-      if (selectedModuleId) {
-        await fetchChapters(selectedModuleId);
-      }
-      
-      // Check if all chapters in the module are completed
-      const allChaptersCompleted = chapters.every(c => 
-        c.id === chapterId || isChapterCompleted(c.id)
-      );
-      
-      if (allChaptersCompleted && selectedModuleId) {
-        // Update module progress to mark learning as completed
-        const { error } = await supabase
-          .from("module_progress")
-          .update({
-            learning_completed: true
-          })
-          .eq("user_id", user.id)
-          .eq("module_id", selectedModuleId);
-          
-        if (error) throw error;
-        
-        // Refresh module progress
-        await fetchModules(selectedCourseId!);
-      }
-      
-      toast.success("অধ্যায় সম্পন্ন হয়েছে!");
-    } catch (error: any) {
-      console.error("Error marking chapter as completed:", error);
-      toast.error("অধ্যায় সম্পন্ন করতে সমস্যা হয়েছে");
-    }
-  };
-
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -531,15 +464,7 @@ const Learning = () => {
                         ) : (
                           <Button
                             className="bg-blue-600 hover:bg-blue-700 text-white"
-                            onClick={() => {
-                              // Navigate to chapter page
-                              navigate(`/chapter?moduleId=${selectedModuleId}&chapterId=${chapter.id}`);
-                              
-                              // Mark chapter as completed when user starts it
-                              // This is a temporary solution - ideally you'd mark it as completed
-                              // when the user actually finishes the chapter content
-                              markChapterAsCompleted(chapter.id);
-                            }}
+                            onClick={() => navigate(`/chapter?moduleId=${selectedModuleId}&chapterId=${chapter.id}`)}
                           >
                             শুরু করুন
                             <ChevronRight className="w-4 h-4 ml-1" />
