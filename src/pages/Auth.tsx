@@ -178,19 +178,19 @@ const EmailAuthForm = ({
     <div className="flex gap-2 mb-4">
       <Button
         type="button"
+        variant={authMode === "signup" ? "outline" : "default"}
+        onClick={() => setAuthMode("signin")}
+        className="flex-1"
+      >
+        লগইন
+      </Button>
+      <Button
+        type="button"
         variant={authMode === "signup" ? "default" : "outline"}
         onClick={() => setAuthMode("signup")}
         className="flex-1"
       >
         সাইন আপ
-      </Button>
-      <Button
-        type="button"
-        variant={authMode === "signin" ? "default" : "outline"}
-        onClick={() => setAuthMode("signin")}
-        className="flex-1"
-      >
-        লগইন
       </Button>
     </div>
 
@@ -321,7 +321,7 @@ const AuthFooter = ({ onNavigateHome }: { onNavigateHome: () => void }) => (
 const Auth = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [authMode, setAuthMode] = useState<AuthMode>("signup");
+  const [authMode, setAuthMode] = useState<AuthMode>("signin"); // Changed to "signin"
   const [activeTab, setActiveTab] = useState<TabValue>("email");
   
   const { isLoading, handleEmailAuth, handlePhoneAuth, handleGoogleLogin } = useAuthActions();
