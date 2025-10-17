@@ -39,6 +39,7 @@ const Chapter = () => {
   useEffect(() => {
     if (chapters.length > 0 && chapters[selectedChapterIndex]) {
       fetchLearningPoints(chapters[selectedChapterIndex].id);
+      setCompletedPoints([]); // reset point progress when switching chapters
     }
   }, [selectedChapterIndex, chapters]);
 
@@ -98,7 +99,9 @@ const Chapter = () => {
   };
 
   const isChapterCompleted = (chapterId: string) => {
-    return chapterProgress.some(p => p.chapter_id === chapterId && p.completed);
+    return chapterProgress.some(
+      (p) => p.chapter_id === chapterId && p.completed
+    );
   };
 
   const markPointCompleted = (pointId: string) => {
@@ -113,7 +116,9 @@ const Chapter = () => {
     const currentChapter = chapters[selectedChapterIndex];
     if (!currentChapter) return;
 
-    const allPointsCompleted = learningPoints.every(point => completedPoints.includes(point.id));
+    const allPointsCompleted = learningPoints.every((point) =>
+      completedPoints.includes(point.id)
+    );
 
     if (!allPointsCompleted) {
       toast.error("সব শেখার পয়েন্ট সম্পন্ন করুন");
@@ -121,27 +126,29 @@ const Chapter = () => {
     }
 
     try {
-      const { error } = await supabase
-        .from("chapter_progress")
-        .upsert({
-          user_id: user.id,
-          chapter_id: currentChapter.id,
-          completed: true,
-          completed_at: new Date().toISOString()
-        });
+      const { error } = await supabase.from("chapter_progress").upsert({
+        user_id: user.id,
+        chapter_id: currentChapter.id,
+        completed: true,
+        completed_at: new Date().toISOString(),
+      });
 
       if (error) throw error;
 
       toast.success("অধ্যায় সম্পন্ন হয়েছে!");
 
-      const allChaptersComplete = selectedChapterIndex === chapters.length - 1;
+      await fetchModuleData(); // Refresh chapter progress
+
+      const allChaptersComplete = chapters.every((c) =>
+        chapterProgress.some(
+          (p) => p.chapter_id === c.id && p.completed === true
+        )
+      );
 
       if (allChaptersComplete) {
         const { error: moduleError } = await supabase
           .from("module_progress")
-          .update({
-            learning_completed: true
-          })
+          .update({ learning_completed: true })
           .eq("user_id", user.id)
           .eq("module_id", moduleId);
 
@@ -149,12 +156,7 @@ const Chapter = () => {
 
         toast.success("সব অধ্যায় সম্পন্ন! এখন প্র্যাকটিস করুন");
         navigate(`/practice?moduleId=${moduleId}`);
-      } else {
-        setSelectedChapterIndex(selectedChapterIndex + 1);
-        setCompletedPoints([]);
       }
-
-      await fetchModuleData();
     } catch (error: any) {
       console.error("Error marking chapter complete:", error);
       toast.error("সমস্যা হয়েছে");
@@ -170,8 +172,11 @@ const Chapter = () => {
   }
 
   const currentChapter = chapters[selectedChapterIndex];
-  const completedChapters = chapters.filter(c => isChapterCompleted(c.id)).length;
-  const progress = chapters.length > 0 ? (completedChapters / chapters.length) * 100 : 0;
+  const completedChapters = chapters.filter((c) =>
+    isChapterCompleted(c.id)
+  ).length;
+  const progress =
+    chapters.length > 0 ? (completedChapters / chapters.length) * 100 : 0;
 
   return (
     <div className="min-h-screen bg-background">
@@ -197,13 +202,16 @@ const Chapter = () => {
 
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto space-y-6">
+          {/* Module and Progress Header */}
           <Card className="p-6 space-y-4">
             <div className="flex items-start justify-between">
               <div className="space-y-2">
                 <Badge className="bg-violet-100 text-violet-700 dark:bg-violet-900/50 dark:text-violet-300">
                   অধ্যায় {selectedChapterIndex + 1}
                 </Badge>
-                <h2 className="text-2xl md:text-3xl font-bold">{currentChapter?.title}</h2>
+                <h2 className="text-2xl md:text-3xl font-bold">
+                  {currentChapter?.title}
+                </h2>
               </div>
               {isChapterCompleted(currentChapter?.id) && (
                 <CheckCircle className="w-8 h-8 text-success flex-shrink-0" />
@@ -219,6 +227,7 @@ const Chapter = () => {
             </div>
           </Card>
 
+          {/* Learning Content */}
           <Card className="p-6 md:p-8 space-y-6">
             <div className="flex items-center gap-3 mb-6">
               <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
@@ -229,7 +238,9 @@ const Chapter = () => {
 
             {learningPoints.length === 0 ? (
               <div className="text-center py-12">
-                <p className="text-muted-foreground">এই অধ্যায়ে কোনো শেখার পয়েন্ট নেই</p>
+                <p className="text-muted-foreground">
+                  এই অধ্যায়ে কোনো শেখার পয়েন্ট নেই
+                </p>
               </div>
             ) : (
               <div className="space-y-6">
@@ -287,25 +298,20 @@ const Chapter = () => {
             )}
           </Card>
 
+          {/* Navigation and Completion Buttons */}
           <div className="flex items-center justify-between gap-4">
             <Button
               variant="outline"
-              onClick={() => setSelectedChapterIndex(Math.max(0, selectedChapterIndex - 1))}
+              onClick={() =>
+                setSelectedChapterIndex(Math.max(0, selectedChapterIndex - 1))
+              }
               disabled={selectedChapterIndex === 0}
             >
               <ChevronLeft className="w-4 h-4 mr-2" />
               পূর্ববর্তী অধ্যায়
             </Button>
 
-            {selectedChapterIndex < chapters.length - 1 ? (
-              <Button
-                onClick={() => setSelectedChapterIndex(selectedChapterIndex + 1)}
-                className="bg-violet-500 hover:bg-violet-600"
-              >
-                পরবর্তী অধ্যায়
-                <ChevronRight className="w-4 h-4 ml-2" />
-              </Button>
-            ) : (
+            <div className="flex items-center gap-3">
               <Button
                 onClick={markChapterComplete}
                 className="bg-success hover:bg-success/90"
@@ -313,9 +319,22 @@ const Chapter = () => {
                 অধ্যায় সম্পন্ন করুন
                 <CheckCircle className="w-4 h-4 ml-2" />
               </Button>
-            )}
+
+              {selectedChapterIndex < chapters.length - 1 && (
+                <Button
+                  onClick={() =>
+                    setSelectedChapterIndex(selectedChapterIndex + 1)
+                  }
+                  className="bg-violet-500 hover:bg-violet-600"
+                >
+                  পরবর্তী অধ্যায়
+                  <ChevronRight className="w-4 h-4 ml-2" />
+                </Button>
+              )}
+            </div>
           </div>
 
+          {/* Chapter Navigation */}
           <Card className="p-6 bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-950/20 dark:to-cyan-950/20 border-blue-200 dark:border-blue-800">
             <h3 className="font-semibold mb-2">অধ্যায় নেভিগেশন</h3>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
