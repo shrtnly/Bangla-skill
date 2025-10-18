@@ -44,6 +44,36 @@ const Practice = () => {
       if (moduleError) throw moduleError;
       setModule(moduleData);
 
+      const { data: chaptersData } = await supabase
+        .from("chapters")
+        .select("id")
+        .eq("module_id", moduleId);
+
+      const totalChapters = chaptersData?.length || 0;
+
+      if (totalChapters === 0) {
+        toast.error("এই মডিউলে কোনো অধ্যায় নেই");
+        navigate(`/learning`);
+        return;
+      }
+
+      const { data: chapterProgressData } = await supabase
+        .from("chapter_progress")
+        .select("*")
+        .eq("user_id", user?.id)
+        .in("chapter_id", chaptersData?.map(c => c.id) || [])
+        .eq("completed", true);
+
+      const completedChapters = chapterProgressData?.length || 0;
+
+      if (completedChapters < totalChapters) {
+        toast.error(`প্রথমে সব অধ্যায় সম্পন্ন করুন (${completedChapters}/${totalChapters} সম্পন্ন)`);
+        setTimeout(() => {
+          navigate(`/chapter?moduleId=${moduleId}`);
+        }, 1500);
+        return;
+      }
+
       const { data: moduleProgressData, error: progressError } = await supabase
         .from("module_progress")
         .select("*")
@@ -52,12 +82,6 @@ const Practice = () => {
         .maybeSingle();
 
       if (progressError) throw progressError;
-
-      if (!moduleProgressData?.learning_completed) {
-        toast.error("প্রথমে সব অধ্যায় সম্পন্ন করুন");
-        navigate(`/chapter?moduleId=${moduleId}`);
-        return;
-      }
 
       const { data: attemptsData, error: attemptsError } = await supabase
         .from("practice_attempts")
