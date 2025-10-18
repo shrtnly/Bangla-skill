@@ -33,6 +33,7 @@ const Learning = () => {
   const [moduleProgress, setModuleProgress] = useState<any[]>([]);
   const [chapters, setChapters] = useState<any[]>([]);
   const [chapterProgress, setChapterProgress] = useState<any[]>([]);
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -238,6 +239,8 @@ const Learning = () => {
     if (!user) return;
     
     try {
+      setRefreshing(true);
+      
       // Check if progress already exists
       const existingProgress = chapterProgress.find(p => p.chapter_id === chapterId);
       
@@ -282,7 +285,8 @@ const Learning = () => {
         const { error } = await supabase
           .from("module_progress")
           .update({
-            learning_completed: true
+            learning_completed: true,
+            status: "practice_ready"
           })
           .eq("user_id", user.id)
           .eq("module_id", selectedModuleId);
@@ -291,12 +295,47 @@ const Learning = () => {
         
         // Refresh module progress
         await fetchModules(selectedCourseId!);
+        
+        toast.success("সব অধ্যায় সম্পন্ন হয়েছে! এখন প্র্যাকটিস করুন।");
+      } else {
+        toast.success("অধ্যায় সম্পন্ন হয়েছে!");
       }
-      
-      toast.success("অধ্যায় সম্পন্ন হয়েছে!");
     } catch (error: any) {
       console.error("Error marking chapter as completed:", error);
       toast.error("অধ্যায় সম্পন্ন করতে সমস্যা হয়েছে");
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
+  // Function to manually mark learning as completed (for debugging)
+  const markLearningAsCompleted = async () => {
+    if (!user || !selectedModuleId) return;
+    
+    try {
+      setRefreshing(true);
+      
+      // Update module progress to mark learning as completed
+      const { error } = await supabase
+        .from("module_progress")
+        .update({
+          learning_completed: true,
+          status: "practice_ready"
+        })
+        .eq("user_id", user.id)
+        .eq("module_id", selectedModuleId);
+        
+      if (error) throw error;
+      
+      // Refresh module progress
+      await fetchModules(selectedCourseId!);
+      
+      toast.success("লার্নিং সম্পন্ন হিসেবে চিহ্নিত করা হয়েছে!");
+    } catch (error: any) {
+      console.error("Error marking learning as completed:", error);
+      toast.error("লার্নিং সম্পন্ন করতে সমস্যা হয়েছে");
+    } finally {
+      setRefreshing(false);
     }
   };
 
@@ -402,7 +441,7 @@ const Learning = () => {
                         <Lock className="w-5 h-5 text-muted-foreground flex-shrink-0" />
                       ) : status === "completed" ? (
                         <CheckCircle className="w-5 h-5 text-success flex-shrink-0" />
-                      ) : status === "in_progress" ? (
+                      ) : status === "in_progress" || status === "practice_ready" ? (
                         <Play className="w-5 h-5 text-primary flex-shrink-0" />
                       ) : null}
                     </div>
@@ -442,7 +481,9 @@ const Learning = () => {
             {selectedModule && (
               <Card className="p-6 bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-950/20 dark:to-cyan-950/20 border-blue-200 dark:border-blue-800">
                 <Badge className="mb-3 bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300">
-                  {selectedModuleProgress?.status === "completed" ? "সম্পন্ন" : selectedModuleProgress ? "চলমান" : "নতুন"}
+                  {selectedModuleProgress?.status === "completed" ? "সম্পন্ন" : 
+                   selectedModuleProgress?.status === "practice_ready" ? "প্র্যাকটিসের জন্য প্রস্তুত" : 
+                   selectedModuleProgress ? "চলমান" : "নতুন"}
                 </Badge>
                 <h2 className="text-2xl font-bold mb-2">{selectedModule.title}</h2>
                 <p className="text-muted-foreground mb-4">{selectedModule.description || "এই মডিউলে শিখুন"}</p>
@@ -466,6 +507,21 @@ const Learning = () => {
                 </div>
 
                 <Progress value={moduleProgressPercentage} className="h-3" />
+                
+                {/* Debug button - remove in production */}
+                {process.env.NODE_ENV === 'development' && (
+                  <div className="mt-4">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={markLearningAsCompleted}
+                      disabled={refreshing || selectedModuleProgress?.learning_completed}
+                    >
+                      {refreshing ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+                      Debug: Mark Learning Complete
+                    </Button>
+                  </div>
+                )}
               </Card>
             )}
 
@@ -534,11 +590,6 @@ const Learning = () => {
                             onClick={() => {
                               // Navigate to chapter page
                               navigate(`/chapter?moduleId=${selectedModuleId}&chapterId=${chapter.id}`);
-                              
-                              // Mark chapter as completed when user starts it
-                              // This is a temporary solution - ideally you'd mark it as completed
-                              // when the user actually finishes the chapter content
-                              markChapterAsCompleted(chapter.id);
                             }}
                           >
                             শুরু করুন
@@ -595,6 +646,16 @@ const Learning = () => {
                     )}
                   </Button>
                 </div>
+                
+                {/* Debug info - remove in production */}
+                {process.env.NODE_ENV === 'development' && (
+                  <div className="mt-4 p-2 bg-gray-100 dark:bg-gray-800 rounded text-xs">
+                    <p>Module Progress Status: {selectedModuleProgress?.status || 'None'}</p>
+                    <p>Learning Completed: {selectedModuleProgress?.learning_completed ? 'Yes' : 'No'}</p>
+                    <p>Practice Completed: {selectedModuleProgress?.practice_completed ? 'Yes' : 'No'}</p>
+                    <p>Quiz Passed: {selectedModuleProgress?.quiz_passed ? 'Yes' : 'No'}</p>
+                  </div>
+                )}
               </Card>
             )}
           </div>
