@@ -52,7 +52,7 @@ const useAuthActions = () => {
       }
 
       if (authMode === "signup") {
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email,
           password,
           options: {
@@ -64,8 +64,15 @@ const useAuthActions = () => {
         });
 
         if (error) throw error;
-        toast.success("রেজিস্ট্রেশন সফল! ড্যাশবোর্ডে যাচ্ছেন...");
-        navigate("/dashboard");
+
+        if (data?.user && !data.session) {
+          toast.success("রেজিস্ট্রেশন সফল! আপনার ইমেইল চেক করুন এবং নিশ্চিত করুন।", {
+            duration: 5000
+          });
+        } else {
+          toast.success("রেজিস্ট্রেশন সফল! ড্যাশবোর্ডে যাচ্ছেন...");
+          navigate("/dashboard");
+        }
       } else {
         const { error } = await supabase.auth.signInWithPassword({
           email,
@@ -81,8 +88,22 @@ const useAuthActions = () => {
         toast.error(error.issues[0].message);
       } else if (error.message?.includes("Invalid login credentials")) {
         toast.error("ভুল ইমেইল বা পাসওয়ার্ড");
+      } else if (error.message?.includes("Email not confirmed")) {
+        toast.error("আপনার ইমেইল এখনো নিশ্চিত হয়নি। ইমেইল চেক করুন এবং লিংকে ক্লিক করুন।", {
+          duration: 6000
+        });
       } else if (error.message?.includes("already registered")) {
-        toast.error("এই ইমেইল দিয়ে ইতিমধ্যে একাউন্ট আছে");
+        toast.error("এই ইমেইল দিয়ে ইতিমধ্যে একাউন্ট আছে। লগইন করুন।");
+      } else if (error.message?.includes("User already registered")) {
+        toast.error("এই ইমেইল দিয়ে ইতিমধ্যে একাউন্ট আছে। লগইন করুন।");
+      } else if (error.code === "email_not_confirmed") {
+        toast.error("আপনার ইমেইল এখনো নিশ্চিত হয়নি। ইমেইল চেক করুন এবং লিংকে ক্লিক করুন।", {
+          duration: 6000
+        });
+      } else if (error.message?.includes("Invalid email")) {
+        toast.error("সঠিক ইমেইল ঠিকানা লিখুন");
+      } else if (error.message?.includes("Password should be at least")) {
+        toast.error("পাসওয়ার্ড কমপক্ষে ৬ অক্ষরের হতে হবে");
       } else {
         toast.error(error.message || "একটি সমস্যা হয়েছে");
       }
@@ -320,11 +341,25 @@ const AuthFooter = ({ onNavigateHome }: { onNavigateHome: () => void }) => (
 // Main Auth component
 const Auth = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, resendConfirmation } = useAuth();
   const [authMode, setAuthMode] = useState<AuthMode>("signin"); // Changed to "signin"
   const [activeTab, setActiveTab] = useState<TabValue>("email");
-  
+  const [resendEmail, setResendEmail] = useState("");
+  const [showResendForm, setShowResendForm] = useState(false);
+
   const { isLoading, handleEmailAuth, handlePhoneAuth, handleGoogleLogin } = useAuthActions();
+
+  const handleResendConfirmation = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    try {
+      await resendConfirmation(resendEmail);
+      toast.success("নিশ্চিতকরণ ইমেইল পাঠানো হয়েছে! আপনার ইনবক্স চেক করুন।");
+      setShowResendForm(false);
+      setResendEmail("");
+    } catch (error: any) {
+      toast.error("ইমেইল পাঠাতে সমস্যা হয়েছে");
+    }
+  };
 
   // Redirect if already logged in
   useEffect(() => {
@@ -367,6 +402,44 @@ const Auth = () => {
 
         <Divider />
         <SocialLogin onGoogleLogin={handleGoogleLogin} />
+
+        {!showResendForm ? (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="w-full text-xs"
+            onClick={() => setShowResendForm(true)}
+          >
+            ইমেইল নিশ্চিত করেননি? পুনরায় পাঠান
+          </Button>
+        ) : (
+          <form onSubmit={handleResendConfirmation} className="space-y-2">
+            <Input
+              type="email"
+              placeholder="আপনার ইমেইল"
+              value={resendEmail}
+              onChange={(e) => setResendEmail(e.target.value)}
+              required
+            />
+            <div className="flex gap-2">
+              <Button type="submit" size="sm" className="flex-1">
+                পুনরায় পাঠান
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setShowResendForm(false);
+                  setResendEmail("");
+                }}
+              >
+                বাতিল
+              </Button>
+            </div>
+          </form>
+        )}
+
         <AuthFooter onNavigateHome={() => navigate("/")} />
       </Card>
     </div>
