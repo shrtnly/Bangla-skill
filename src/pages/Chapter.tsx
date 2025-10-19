@@ -183,33 +183,61 @@ const Chapter = () => {
     try {
       setSubmitting(true);
 
-      const { error } = await supabase
+      // First, check if there's already a record for this chapter
+      const { data: existingProgress, error: fetchError } = await supabase
         .from("chapter_progress")
-        .upsert({
-          user_id: user.id,
-          chapter_id: currentChapter.id,
-          completed: true,
-          completed_learning_points: completedPoints,
-          completed_at: new Date().toISOString()
-        }, {
-          onConflict: "user_id,chapter_id"
-        });
+        .select("*")
+        .eq("user_id", user.id)
+        .eq("chapter_id", currentChapter.id)
+        .single();
 
-      if (error) throw error;
+      if (fetchError && fetchError.code !== 'PGRST116') {
+        console.error("Error fetching existing progress:", fetchError);
+        throw fetchError;
+      }
 
-      const updatedProgress = await supabase
+      let result;
+      if (existingProgress) {
+        // Update existing record
+        result = await supabase
+          .from("chapter_progress")
+          .update({
+            completed: true,
+            completed_learning_points: completedPoints,
+            completed_at: new Date().toISOString()
+          })
+          .eq("id", existingProgress.id);
+      } else {
+        // Insert new record
+        result = await supabase
+          .from("chapter_progress")
+          .insert({
+            user_id: user.id,
+            chapter_id: currentChapter.id,
+            completed: true,
+            completed_learning_points: completedPoints,
+            completed_at: new Date().toISOString()
+          });
+      }
+
+      if (result.error) {
+        console.error("Database error:", result.error);
+        throw result.error;
+      }
+
+      // Refresh chapter progress data
+      const { data: updatedProgress, error: refreshError } = await supabase
         .from("chapter_progress")
         .select("*")
         .eq("user_id", user.id)
         .in("chapter_id", chapters.map(c => c.id));
 
-      if (updatedProgress.data) {
-        setChapterProgress(updatedProgress.data);
-      }
+      if (refreshError) throw refreshError;
+      setChapterProgress(updatedProgress || []);
 
       toast.success("অধ্যায় সম্পন্ন হয়েছে!");
 
-      const completedChaptersCount = updatedProgress.data?.filter(p => p.completed).length || 0;
+      const completedChaptersCount = updatedProgress?.filter(p => p.completed).length || 0;
       const allChaptersComplete = completedChaptersCount === chapters.length;
 
       if (allChaptersComplete) {
@@ -244,15 +272,25 @@ const Chapter = () => {
       }
     } catch (error: any) {
       console.error("Error marking chapter complete:", error);
+      
+      // More detailed error logging
+      if (error) {
+        console.error("Error details:", {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code
+        });
+      }
 
-      if (error.message?.includes("unique constraint")) {
+      if (error?.code === '23505') {
         toast.error("এই অধ্যায় ইতিমধ্যে সম্পন্ন হয়েছে");
-      } else if (error.message?.includes("network")) {
+      } else if (error?.message?.includes("network") || error?.code === 'NETWORK_ERROR') {
         toast.error("ইন্টারনেট সংযোগ চেক করুন");
-      } else if (error.message?.includes("permission")) {
+      } else if (error?.message?.includes("permission") || error?.code === '42501') {
         toast.error("আপনার অনুমতি নেই");
       } else {
-        toast.error("অধ্যায় সম্পন্ন করতে সমস্যা হয়েছে। পুনরায় চেষ্টা করুন।");
+        toast.error(`অধ্যায় সম্পন্ন করতে সমস্যা হয়েছে: ${error?.message || "অজানা ত্রুটি"}`);
       }
     } finally {
       setSubmitting(false);
