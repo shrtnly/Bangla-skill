@@ -10,7 +10,10 @@ import {
   ChevronLeft,
   Loader2,
   BookOpen,
-  Lock
+  Lock,
+  Target,
+  Trophy,
+  Award
 } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -31,6 +34,7 @@ const Chapter = () => {
   const [completedPoints, setCompletedPoints] = useState<string[]>([]);
   const [chapterProgress, setChapterProgress] = useState<any[]>([]);
   const [submitting, setSubmitting] = useState(false);
+  const [moduleProgress, setModuleProgress] = useState<any>(null);
 
   useEffect(() => {
     if (moduleId) {
@@ -66,6 +70,22 @@ const Chapter = () => {
 
       if (chaptersError) throw chaptersError;
       setChapters(chaptersData || []);
+
+      // Fetch module progress
+      if (user && moduleId) {
+        const { data: modProgressData, error: modProgressError } = await supabase
+          .from("module_progress")
+          .select("*")
+          .eq("user_id", user.id)
+          .eq("module_id", moduleId)
+          .maybeSingle();
+
+        if (modProgressError && modProgressError.code !== 'PGRST116') {
+          console.error("Error fetching module progress:", modProgressError);
+        } else {
+          setModuleProgress(modProgressData);
+        }
+      }
 
       if (user) {
         const { data: progressData, error: progressError } = await supabase
@@ -224,7 +244,16 @@ const Chapter = () => {
       }
     } catch (error: any) {
       console.error("Error marking chapter complete:", error);
-      toast.error("সমস্যা হয়েছে");
+
+      if (error.message?.includes("unique constraint")) {
+        toast.error("এই অধ্যায় ইতিমধ্যে সম্পন্ন হয়েছে");
+      } else if (error.message?.includes("network")) {
+        toast.error("ইন্টারনেট সংযোগ চেক করুন");
+      } else if (error.message?.includes("permission")) {
+        toast.error("আপনার অনুমতি নেই");
+      } else {
+        toast.error("অধ্যায় সম্পন্ন করতে সমস্যা হয়েছে। পুনরায় চেষ্টা করুন।");
+      }
     } finally {
       setSubmitting(false);
     }
@@ -474,6 +503,93 @@ const Chapter = () => {
               })}
             </div>
           </Card>
+
+          {/* Practice and Quiz Buttons */}
+          {moduleProgress?.learning_completed && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Card className="p-6 bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-950/20 dark:to-cyan-950/20 border-blue-200 dark:border-blue-800">
+                <div className="flex items-start gap-4">
+                  <div className="w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center flex-shrink-0">
+                    <Target className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-lg mb-2">প্র্যাকটিস কুইজ</h3>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      আপনার শেখা যাচাই করুন এবং চূড়ান্ত কুইজের জন্য প্রস্তুত হন
+                    </p>
+                    <Button
+                      onClick={() => navigate(`/practice?moduleId=${moduleId}`)}
+                      className="w-full bg-blue-600 hover:bg-blue-700"
+                    >
+                      <Target className="w-4 h-4 mr-2" />
+                      প্র্যাকটিস শুরু করুন
+                      <ChevronRight className="w-4 h-4 ml-2" />
+                    </Button>
+                  </div>
+                </div>
+              </Card>
+
+              <Card className="p-6 bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-950/20 dark:to-orange-950/20 border-amber-200 dark:border-amber-800">
+                <div className="flex items-start gap-4">
+                  <div className="w-12 h-12 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center flex-shrink-0">
+                    <Trophy className="w-6 h-6 text-amber-600 dark:text-amber-400" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-lg mb-2">চূড়ান্ত কুইজ</h3>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      {moduleProgress?.practice_quiz_passed
+                        ? "চূড়ান্ত কুইজ নিয়ে সার্টিফিকেট অর্জন করুন"
+                        : "প্রথমে প্র্যাকটিস কুইজ সম্পন্ন করুন"}
+                    </p>
+                    <Button
+                      onClick={() => navigate(`/quiz?moduleId=${moduleId}`)}
+                      disabled={!moduleProgress?.practice_quiz_passed}
+                      className="w-full bg-amber-600 hover:bg-amber-700"
+                    >
+                      {moduleProgress?.practice_quiz_passed ? (
+                        <>
+                          <Trophy className="w-4 h-4 mr-2" />
+                          চূড়ান্ত কুইজ শুরু করুন
+                          <ChevronRight className="w-4 h-4 ml-2" />
+                        </>
+                      ) : (
+                        <>
+                          <Lock className="w-4 h-4 mr-2" />
+                          লক করা আছে
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              </Card>
+            </div>
+          )}
+
+          {/* Completion Badge */}
+          {moduleProgress?.quiz_passed && (
+            <Card className="p-6 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20 border-green-200 dark:border-green-800">
+              <div className="flex items-center gap-4">
+                <div className="w-16 h-16 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center flex-shrink-0">
+                  <Award className="w-8 h-8 text-green-600 dark:text-green-400" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-semibold text-xl mb-1 text-green-700 dark:text-green-400">
+                    অভিনন্দন! 🎉
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    আপনি এই মডিউলটি সফলভাবে সম্পন্ন করেছেন এবং সার্টিফিকেট পাওয়ার যোগ্য!
+                  </p>
+                </div>
+                <Button
+                  variant="outline"
+                  onClick={() => navigate("/dashboard")}
+                  className="border-green-600 text-green-600 hover:bg-green-50"
+                >
+                  ড্যাশবোর্ডে ফিরে যান
+                </Button>
+              </div>
+            </Card>
+          )}
         </div>
       </div>
     </div>
