@@ -107,8 +107,11 @@ const Chapter = () => {
 
   const loadChapterProgress = (chapterId: string) => {
     const progress = chapterProgress.find(p => p.chapter_id === chapterId);
+    // Handle both possible column names or structures
     if (progress?.completed_learning_points) {
       setCompletedPoints(progress.completed_learning_points);
+    } else if (progress?.learning_points) {
+      setCompletedPoints(progress.learning_points);
     } else {
       setCompletedPoints([]);
     }
@@ -142,20 +145,40 @@ const Chapter = () => {
     setCompletedPoints(newCompletedPoints);
 
     try {
-      await supabase
-        .from("chapter_progress")
-        .upsert({
-          user_id: user.id,
-          chapter_id: currentChapter.id,
-          completed_learning_points: newCompletedPoints,
-          completed: false
-        }, {
-          onConflict: "user_id,chapter_id"
-        });
+      // Try with completed_learning_points first
+      try {
+        await supabase
+          .from("chapter_progress")
+          .upsert({
+            user_id: user.id,
+            chapter_id: currentChapter.id,
+            completed_learning_points: newCompletedPoints,
+            completed: false
+          }, {
+            onConflict: "user_id,chapter_id"
+          });
+      } catch (upsertError: any) {
+        // If that fails, try with learning_points
+        if (upsertError.message?.includes('completed_learning_points')) {
+          await supabase
+            .from("chapter_progress")
+            .upsert({
+              user_id: user.id,
+              chapter_id: currentChapter.id,
+              learning_points: newCompletedPoints,
+              completed: false
+            }, {
+              onConflict: "user_id,chapter_id"
+            });
+        } else {
+          throw upsertError;
+        }
+      }
 
       toast.success("পয়েন্ট সম্পন্ন হয়েছে!");
     } catch (error: any) {
       console.error("Error marking point complete:", error);
+      toast.error("পয়েন্ট সম্পন্ন করতে সমস্যা হয়েছে");
     }
   };
 
@@ -197,15 +220,29 @@ const Chapter = () => {
       }
 
       let result;
+      const updateData: any = {
+        completed: true,
+        completed_at: new Date().toISOString()
+      };
+
+      // Try to determine which column name to use
+      // First check if we have existing data with a specific column
+      let columnName = 'completed_learning_points'; // default
+      if (existingProgress) {
+        if (existingProgress.completed_learning_points !== undefined) {
+          columnName = 'completed_learning_points';
+        } else if (existingProgress.learning_points !== undefined) {
+          columnName = 'learning_points';
+        }
+      }
+
+      updateData[columnName] = completedPoints;
+
       if (existingProgress) {
         // Update existing record
         result = await supabase
           .from("chapter_progress")
-          .update({
-            completed: true,
-            completed_learning_points: completedPoints,
-            completed_at: new Date().toISOString()
-          })
+          .update(updateData)
           .eq("id", existingProgress.id);
       } else {
         // Insert new record
@@ -214,9 +251,7 @@ const Chapter = () => {
           .insert({
             user_id: user.id,
             chapter_id: currentChapter.id,
-            completed: true,
-            completed_learning_points: completedPoints,
-            completed_at: new Date().toISOString()
+            ...updateData
           });
       }
 
@@ -289,6 +324,8 @@ const Chapter = () => {
         toast.error("ইন্টারনেট সংযোগ চেক করুন");
       } else if (error?.message?.includes("permission") || error?.code === '42501') {
         toast.error("আপনার অনুমতি নেই");
+      } else if (error?.message?.includes("column") && error?.message?.includes("does not exist")) {
+        toast.error("ডাটাবেস স্কিমা আপডেট করা প্রয়োজন। অ্যাডমিনের সাথে যোগাযোগ করুন।");
       } else {
         toast.error(`অধ্যায় সম্পন্ন করতে সমস্যা হয়েছে: ${error?.message || "অজানা ত্রুটি"}`);
       }
