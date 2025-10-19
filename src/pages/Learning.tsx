@@ -14,7 +14,8 @@ import {
   Star,
   Loader2,
   Clock,
-  Award
+  Award,
+  CircleCheckBig
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -34,6 +35,7 @@ const Learning = () => {
   const [chapters, setChapters] = useState<any[]>([]);
   const [chapterProgress, setChapterProgress] = useState<any[]>([]);
   const [refreshing, setRefreshing] = useState(false);
+  const [activeTab, setActiveTab] = useState<'modules' | 'chapters'>('modules');
 
   useEffect(() => {
     if (user) {
@@ -174,7 +176,7 @@ const Learning = () => {
       const progress = existingProgress || { learning_completed: false, practice_completed: false, quiz_passed: false };
 
       if (!progress.learning_completed) {
-        navigate(`/chapter?moduleId=${module.id}`);
+        setActiveTab('chapters');
       } else if (!progress.practice_completed) {
         toast.info("শিক্ষা সম্পন্ন! এখন প্র্যাকটিস করুন");
         navigate(`/practice?moduleId=${module.id}`);
@@ -404,8 +406,28 @@ const Learning = () => {
       </header>
 
       <div className="container mx-auto px-4 py-6">
+        {/* Mobile Tab Navigation */}
+        <div className="flex gap-2 mb-6 md:hidden">
+          <Button
+            variant={activeTab === 'modules' ? 'default' : 'outline'}
+            className="flex-1"
+            onClick={() => setActiveTab('modules')}
+          >
+            মডিউল
+          </Button>
+          <Button
+            variant={activeTab === 'chapters' ? 'default' : 'outline'}
+            className="flex-1"
+            onClick={() => setActiveTab('chapters')}
+            disabled={!selectedModuleId}
+          >
+            অধ্যায়
+          </Button>
+        </div>
+
         <div className="grid lg:grid-cols-[320px,1fr] gap-6">
-          <div className="space-y-4">
+          {/* Modules Section - Hidden on mobile when chapters tab is active */}
+          <div className={`space-y-4 ${activeTab === 'chapters' ? 'hidden md:block' : ''}`}>
             <h2 className="text-lg font-bold">সব মডিউল</h2>
 
             <div className="space-y-3">
@@ -430,6 +452,7 @@ const Learning = () => {
                     onClick={() => {
                       if (unlocked) {
                         setSelectedModuleId(module.id);
+                        setActiveTab('chapters');
                       }
                     }}
                   >
@@ -477,7 +500,8 @@ const Learning = () => {
             </Card>
           </div>
 
-          <div className="space-y-6">
+          {/* Chapters Section - Hidden on mobile when modules tab is active */}
+          <div className={`space-y-6 ${activeTab === 'modules' ? 'hidden md:block' : ''}`}>
             {selectedModule && (
               <Card className="p-6 bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-950/20 dark:to-cyan-950/20 border-blue-200 dark:border-blue-800">
                 <Badge className="mb-3 bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300">
@@ -559,7 +583,7 @@ const Learning = () => {
                             : "bg-blue-100 dark:bg-blue-900/30"
                         }`}>
                           {completed ? (
-                            <CheckCircle className="w-6 h-6 text-green-600 dark:text-green-400" />
+                            <CircleCheckBig className="w-6 h-6 text-green-600 dark:text-green-400" />
                           ) : (
                             <span className={`font-bold ${locked ? "text-muted-foreground" : "text-blue-600 dark:text-blue-400"}`}>
                               {idx + 1}
@@ -615,7 +639,7 @@ const Learning = () => {
                   </div>
                 </div>
 
-                <div className="flex gap-3">
+                <div className="flex flex-col sm:flex-row gap-3">
                   <Button
                     className="flex-1 bg-green-600 hover:bg-green-700 text-white"
                     onClick={() => handlePractice(selectedModuleId)}
