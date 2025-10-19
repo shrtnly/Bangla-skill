@@ -37,10 +37,12 @@ const [submitting, setSubmitting] = useState(false);
 const [moduleProgress, setModuleProgress] = useState<any>(null);
 
 useEffect(() => {
-if (moduleId) {
+if (moduleId && user) {
 fetchModuleData();
+} else if (moduleId && !user) {
+console.warn("User not authenticated, waiting...");
 }
-}, [moduleId]);
+}, [moduleId, user]);
 
 useEffect(() => {
 if (chapters.length > 0 && chapters[selectedChapterIndex]) {
@@ -138,11 +140,24 @@ const markPointCompleted = async (pointId: string) => {
 if (!user || completedPoints.includes(pointId)) return;
 
 const currentChapter = chapters[selectedChapterIndex];
+if (!currentChapter) {
+console.error("No current chapter found");
+toast.error("অধ্যায়ের তথ্য পাওয়া যায়নি");
+return;
+}
+
 const newCompletedPoints = [...completedPoints, pointId];
 setCompletedPoints(newCompletedPoints);
 
 try {
-await supabase
+console.log('Marking point complete:', {
+user_id: user.id,
+chapter_id: currentChapter.id,
+point_id: pointId,
+total_points: newCompletedPoints.length
+});
+
+const { error } = await supabase
 .from("chapter_progress")
 .upsert({
 user_id: user.id,
@@ -153,9 +168,18 @@ completed: false
 onConflict: "user_id,chapter_id"
 });
 
+if (error) {
+console.error('Error saving point progress:', error);
+setCompletedPoints(completedPoints);
+toast.error("পয়েন্ট সংরক্ষণে সমস্যা হয়েছে");
+return;
+}
+
 toast.success("পয়েন্ট সম্পন্ন হয়েছে!");
 } catch (error: any) {
 console.error("Error marking point complete:", error);
+setCompletedPoints(completedPoints);
+toast.error("সংযোগে সমস্যা হয়েছে। পুনরায় চেষ্টা করুন।");
 }
 };
 
@@ -163,7 +187,11 @@ const markChapterComplete = async () => {
 if (!user || submitting) return;
 
 const currentChapter = chapters[selectedChapterIndex];
-if (!currentChapter) return;
+if (!currentChapter) {
+console.error("No current chapter found");
+toast.error("অধ্যায়ের তথ্য পাওয়া যায়নি");
+return;
+}
 
 if (isChapterCompleted(currentChapter.id)) {
 toast.info("এই অধ্যায় ইতিমধ্যে সম্পন্ন হয়েছে");
@@ -176,6 +204,8 @@ return;
 const allPointsCompleted = learningPoints.every(point => completedPoints.includes(point.id));
 
 if (!allPointsCompleted) {
+const completedCount = learningPoints.filter(p => completedPoints.includes(p.id)).length;
+console.warn(`Not all points completed: ${completedCount}/${learningPoints.length}`);
 toast.error("সব শেখার পয়েন্ট সম্পন্ন করুন");
 return;
 }
@@ -183,7 +213,13 @@ return;
 try {
 setSubmitting(true);
 
-const { error } = await supabase
+console.log('Marking chapter complete:', {
+user_id: user.id,
+chapter_id: currentChapter.id,
+completed_points: completedPoints.length
+});
+
+const { error, data } = await supabase
 .from("chapter_progress")
 .upsert({
 user_id: user.id,
@@ -193,9 +229,20 @@ completed_learning_points: completedPoints,
 completed_at: new Date().toISOString()
 }, {
 onConflict: "user_id,chapter_id"
-});
+})
+.select();
 
-if (error) throw error;
+if (error) {
+console.error('Supabase error details:', {
+code: error.code,
+message: error.message,
+details: error.details,
+hint: error.hint
+});
+throw error;
+}
+
+console.log('Chapter progress saved successfully:', data);
 
 const updatedProgress = await supabase
 .from("chapter_progress")
@@ -213,13 +260,13 @@ const completedChaptersCount = updatedProgress.data?.filter(p => p.completed).le
 const allChaptersComplete = completedChaptersCount === chapters.length;
 
 if (allChaptersComplete) {
+console.log('All chapters complete, updating module progress');
 const { error: moduleError } = await supabase
 .from("module_progress")
 .upsert({
 user_id: user.id,
 module_id: moduleId,
 learning_completed: true,
-completed: true,
 status: "in_progress"
 }, {
 onConflict: "user_id,module_id"
@@ -227,6 +274,8 @@ onConflict: "user_id,module_id"
 
 if (moduleError) {
 console.error("Error updating module progress:", moduleError);
+} else {
+console.log('Module progress updated successfully');
 }
 
 toast.success("সব অধ্যায় সম্পন্ন! প্র্যাকটিস আনলক হয়েছে 🎉", {
@@ -243,16 +292,35 @@ setCompletedPoints([]);
 }
 }
 } catch (error: any) {
-console.error("Error marking chapter complete:", error);
+console.error("Error marking chapter complete:", {
+error,
+errorMessage: error?.message,
+errorCode: error?.code,
+errorDetails: error?.details,
+user_id: user?.id,
+chapter_id: currentChapter?.id
+});
 
-if (error.message?.includes("unique constraint")) {
+if (error.code === '23505' || error.message?.includes("unique constraint") || error.message?.includes("duplicate key")) {
 toast.error("এই অধ্যায় ইতিমধ্যে সম্পন্ন হয়েছে");
-} else if (error.message?.includes("network")) {
-toast.error("ইন্টারনেট সংযোগ চেক করুন");
-} else if (error.message?.includes("permission")) {
-toast.error("আপনার অনুমতি নেই");
+const { data: existingProgress } = await supabase
+.from("chapter_progress")
+.select("*")
+.eq("user_id", user.id)
+.in("chapter_id", chapters.map(c => c.id));
+if (existingProgress) {
+setChapterProgress(existingProgress);
+}
+} else if (error.code === '42501' || error.message?.includes("permission") || error.message?.includes("policy")) {
+toast.error("আপনার অনুমতি নেই। অনুগ্রহ করে পুনরায় লগইন করুন।");
+} else if (error.code === 'PGRST301' || error.message?.includes("JWT")) {
+toast.error("আপনার সেশন মেয়াদ শেষ। অনুগ্রহ করে পুনরায় লগইন করুন।");
+} else if (error.message?.includes("fetch") || error.message?.includes("network") || error.name === "FetchError") {
+toast.error("ইন্টারনেট সংযোগ চেক করুন এবং পুনরায় চেষ্টা করুন।");
+} else if (error.code === '23503') {
+toast.error("অবৈধ ডেটা। পেজ রিফ্রেশ করুন এবং পুনরায় চেষ্টা করুন।");
 } else {
-toast.error("অধ্যায় সম্পন্ন করতে সমস্যা হয়েছে। পুনরায় চেষ্টা করুন।");
+toast.error(`সমস্যা হয়েছে: ${error.message || 'অজানা ত্রুটি'}। পুনরায় চেষ্টা করুন।`);
 }
 } finally {
 setSubmitting(false);
@@ -537,16 +605,16 @@ className="w-full bg-blue-600 hover:bg-blue-700"
 <div className="flex-1">
 <h3 className="font-semibold text-lg mb-2">চূড়ান্ত কুইজ</h3>
 <p className="text-sm text-muted-foreground mb-4">
-{moduleProgress?.practice_quiz_passed
+{moduleProgress?.practice_completed
 ? "চূড়ান্ত কুইজ নিয়ে সার্টিফিকেট অর্জন করুন"
 : "প্রথমে প্র্যাকটিস কুইজ সম্পন্ন করুন"}
 </p>
 <Button
 onClick={() => navigate(`/quiz?moduleId=${moduleId}`)}
-disabled={!moduleProgress?.practice_quiz_passed}
+disabled={!moduleProgress?.practice_completed}
 className="w-full bg-amber-600 hover:bg-amber-700"
 >
-{moduleProgress?.practice_quiz_passed ? (
+{moduleProgress?.practice_completed ? (
 <>
 <Trophy className="w-4 h-4 mr-2" />
 চূড়ান্ত কুইজ শুরু করুন
