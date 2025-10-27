@@ -12,8 +12,9 @@ import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Loader2, Camera, User, GraduationCap, Briefcase, MapPin, Phone, Calendar, Check, Edit, Eye, Save, X } from "lucide-react";
+import { Loader2, Camera, User, GraduationCap, Briefcase, MapPin, Phone, Calendar, Check, Edit, Eye, Save, X, Award } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { CertificatesTab } from "@/components/CertificatesTab";
 
 interface ProfileData {
   full_name: string;
@@ -325,6 +326,15 @@ const Profile = () => {
                           <Briefcase className="h-4 w-4" />
                           পেশাগত তথ্য
                         </TabsTrigger>
+                        <TabsTrigger value="certificates" className="justify-start gap-2 data-[state=active]:bg-primary/10">
+                          <Award className="h-4 w-4" />
+                          সার্টিফিকেট
+                          {profile.total_certificates > 0 && (
+                            <Badge className="ml-auto bg-primary text-white">
+                              {profile.total_certificates}
+                            </Badge>
+                          )}
+                        </TabsTrigger>
                       </TabsList>
                     </Tabs>
                   </div>
@@ -561,10 +571,14 @@ const Profile = () => {
                     </CardContent>
                   </Card>
                 </TabsContent>
+
+                <TabsContent value="certificates" className="space-y-6 mt-0">
+                  <CertificatesTab />
+                </TabsContent>
               </Tabs>
 
               {/* Action Buttons */}
-              {!isPreviewMode && (
+              {!isPreviewMode && activeTab !== "certificates" && (
                 <div className="flex justify-end gap-2 mt-6">
                   {hasChanges && (
                     <Button type="button" variant="outline" onClick={handleCancel}>

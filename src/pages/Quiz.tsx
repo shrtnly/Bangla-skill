@@ -215,13 +215,40 @@ const Quiz = () => {
           .eq("module_id", moduleId);
 
         if (progressError) throw progressError;
+
+        // Check if all modules in the course are completed and generate certificate
+        if (module && user) {
+          try {
+            const { data: courseData } = await supabase
+              .from("modules")
+              .select("course_id")
+              .eq("id", moduleId)
+              .single();
+
+            if (courseData) {
+              const { data: certResult, error: certError } = await supabase
+                .rpc("check_and_generate_certificate", {
+                  p_user_id: user.id,
+                  p_course_id: courseData.course_id
+                });
+
+              if (!certError && certResult?.success) {
+                toast.success("🎉 অভিনন্দন! আপনি সার্টিফিকেট অর্জন করেছেন!", {
+                  duration: 5000
+                });
+              }
+            }
+          } catch (certError: any) {
+            console.log("Certificate check:", certError);
+          }
+        }
       }
 
       setFinalScore(correctCount);
       setIsComplete(true);
 
       if (passed) {
-        toast.success("অভিনন্দন! আপনি পাস করেছেন!");
+        toast.success("অভিনন্দন! আপনি পাস করেছেন! 🎉");
       } else {
         toast.error("দুঃখিত, আপনি পাস করতে পারেননি");
       }

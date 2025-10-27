@@ -17,6 +17,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { CourseDetailsModal } from "@/components/CourseDetailsModal";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -24,6 +25,11 @@ const Dashboard = () => {
   const [profile, setProfile] = useState<any>(null);
   const { theme, setTheme } = useTheme();
   const [courses, setCourses] = useState<any[]>([]);
+  const [courseProgress, setCourseProgress] = useState<Record<string, any>>({});
+  const [courseModules, setCourseModules] = useState<Record<string, any[]>>({});
+  const [selectedCourse, setSelectedCourse] = useState<any>(null);
+  const [detailsModalOpen, setDetailsModalOpen] = useState(false);
+  const [realStats, setRealStats] = useState<any>(null);
 
 
   useEffect(() => {
@@ -35,7 +41,7 @@ const Dashboard = () => {
         .from("profiles")
         .select("*")
         .eq("id", user.id)
-        .single();
+        .maybeSingle();
 
       if (profileError) {
         console.error("Error fetching profile:", profileError);
@@ -43,7 +49,7 @@ const Dashboard = () => {
         setProfile(profileData);
       }
 
-      // Fetch enrolled courses only
+      // Fetch enrolled courses
       const { data: enrollmentsData, error: enrollmentsError } = await supabase
         .from("enrollments")
         .select(`
@@ -54,10 +60,66 @@ const Dashboard = () => {
 
       if (enrollmentsError) {
         console.error("Error fetching enrollments:", enrollmentsError);
-      } else {
-        const enrolledCourses = enrollmentsData?.map((enrollment: any) => enrollment.courses) || [];
-        setCourses(enrolledCourses);
+        return;
       }
+
+      const enrolledCourses = enrollmentsData?.map((enrollment: any) => enrollment.courses) || [];
+      setCourses(enrolledCourses);
+
+      // Fetch modules and progress for each course
+      const progressData: Record<string, any> = {};
+      const modulesData: Record<string, any[]> = {};
+
+      for (const course of enrolledCourses) {
+        // Get modules for course
+        const { data: modules } = await supabase
+          .from("modules")
+          .select("*")
+          .eq("course_id", course.id)
+          .order("order_index");
+
+        if (modules) {
+          modulesData[course.id] = modules;
+
+          // Get chapter progress for all modules
+          const { data: modProgress } = await supabase
+            .from("module_progress")
+            .select("*")
+            .eq("user_id", user.id)
+            .in("module_id", modules.map(m => m.id));
+
+          if (modProgress) {
+            const completedModules = modProgress.filter(p => p.quiz_passed).length;
+            const totalModules = modules.length;
+            const progressPercent = totalModules > 0 ? Math.round((completedModules / totalModules) * 100) : 0;
+            const hasStarted = modProgress.length > 0;
+
+            progressData[course.id] = {
+              completed: completedModules,
+              total: totalModules,
+              percent: progressPercent,
+              hasStarted
+            };
+          }
+        }
+      }
+
+      setCourseProgress(progressData);
+      setCourseModules(modulesData);
+
+      // Calculate real statistics
+      const { data: allModProgress } = await supabase
+        .from("module_progress")
+        .select("*")
+        .eq("user_id", user.id);
+
+      const completedModulesCount = allModProgress?.filter(p => p.quiz_passed).length || 0;
+      const totalModulesCount = Object.values(modulesData).flat().length || 0;
+
+      setRealStats({
+        completedModules: completedModulesCount,
+        totalModules: totalModulesCount
+      });
     };
 
     fetchData();
@@ -65,12 +127,17 @@ const Dashboard = () => {
 
   const userStats = {
     name: profile?.full_name || user?.user_metadata?.full_name || "ব্যবহারকারী",
-    totalCourses: 3,
-    completedModules: 8,
-    totalModules: 24,
+    totalCourses: courses.length,
+    completedModules: realStats?.completedModules || 0,
+    totalModules: realStats?.totalModules || 0,
     points: profile?.points || 0,
     certificates: profile?.total_certificates || 0,
     currentStreak: profile?.current_streak || 0,
+  };
+
+  const handleShowDetails = async (course: any) => {
+    setSelectedCourse(course);
+    setDetailsModalOpen(true);
   };
 
   const handleSignOut = async () => {
@@ -205,46 +272,96 @@ const Dashboard = () => {
                   <Button onClick={() => navigate("/")}>কোর্স দেখুন</Button>
                 </Card>
               ) : (
-                courses.map((course) => (
-                  <Card key={course.id} className="overflow-hidden card-hover">
-                    <div className="flex flex-col md:flex-row">
-                      <div className="w-full md:w-48 h-48 md:h-auto">
-                        <img
-                          src={course.thumbnail_url || "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=400&q=80"}
-                          alt={course.title}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                      <div className="flex-1 p-6 space-y-4">
-                        <div className="space-y-2">
-                          <div className="flex items-start justify-between gap-4">
-                            <h3 className="font-semibold text-lg">{course.title}</h3>
-                            <Badge variant="outline">নতুন</Badge>
-                          </div>
-                          <p className="text-sm text-muted-foreground">
-                            {course.description || "কোর্সের বিবরণ নেই"}
-                          </p>
-                          <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                            <span>{course.total_modules || 0} মডিউল</span>
-                            <span>•</span>
-                            <span>{course.instructor_name || "প্রশিক্ষক"}</span>
-                          </div>
-                        </div>
+                courses.map((course) => {
+                  const progress = courseProgress[course.id];
+                  const hasStarted = progress?.hasStarted || false;
+                  const progressPercent = progress?.percent || 0;
+                  const modules = courseModules[course.id] || [];
+                  const totalDuration = modules.reduce((sum, m) => sum + (m.duration_minutes || 0), 0);
 
-                        <div className="flex gap-3">
-                          <Button 
-                            className="btn-success"
-                            onClick={() => navigate(`/learning?courseId=${course.id}`)}
-                          >
-                            <Play className="w-4 h-4 mr-2" />
-                            শুরু করুন
-                          </Button>
-                          <Button variant="outline">বিস্তারিত</Button>
+                  return (
+                    <Card key={course.id} className="overflow-hidden card-hover">
+                      <div className="flex flex-col md:flex-row">
+                        <div className="w-full md:w-48 h-48 md:h-auto relative">
+                          <img
+                            src={course.thumbnail_url || course.image_url || "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=400&q=80"}
+                            alt={course.title}
+                            className="w-full h-full object-cover"
+                          />
+                          {hasStarted && progressPercent < 100 && (
+                            <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+                              <div className="text-center text-white">
+                                <div className="text-2xl font-bold">{progressPercent}%</div>
+                                <div className="text-xs">সম্পন্ন</div>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex-1 p-6 space-y-4">
+                          <div className="space-y-2">
+                            <div className="flex items-start justify-between gap-4">
+                              <h3 className="font-semibold text-lg">{course.title}</h3>
+                              {!hasStarted ? (
+                                <Badge variant="outline" className="bg-blue-50 text-blue-600 border-blue-200">
+                                  নতুন
+                                </Badge>
+                              ) : progressPercent === 100 ? (
+                                <Badge className="bg-green-100 text-green-700 border-green-200">
+                                  <CheckCircle className="w-3 h-3 mr-1" />
+                                  সম্পন্ন
+                                </Badge>
+                              ) : (
+                                <Badge className="bg-amber-50 text-amber-600 border-amber-200">
+                                  {progressPercent}% চলমান
+                                </Badge>
+                              )}
+                            </div>
+                            <p className="text-sm text-muted-foreground line-clamp-2">
+                              {course.description || "কোর্সের বিবরণ নেই"}
+                            </p>
+                            <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                              <span className="flex items-center gap-1">
+                                <BookOpen className="w-4 h-4" />
+                                {modules.length || course.total_modules || 0} মডিউল
+                              </span>
+                              {totalDuration > 0 && (
+                                <>
+                                  <span>•</span>
+                                  <span className="flex items-center gap-1">
+                                    <Clock className="w-4 h-4" />
+                                    {Math.round(totalDuration / 60)} ঘণ্টা
+                                  </span>
+                                </>
+                              )}
+                            </div>
+                          </div>
+
+                          {hasStarted && progressPercent > 0 && progressPercent < 100 && (
+                            <div className="space-y-2">
+                              <Progress value={progressPercent} className="h-2" />
+                              <p className="text-xs text-muted-foreground">
+                                {progress.completed}/{progress.total} মডিউল সম্পন্ন
+                              </p>
+                            </div>
+                          )}
+
+                          <div className="flex gap-3">
+                            <Button
+                              className="btn-success"
+                              onClick={() => navigate(`/learning?courseId=${course.id}`)}
+                            >
+                              <Play className="w-4 h-4 mr-2" />
+                              {hasStarted ? "চালিয়ে যান" : "শুরু করুন"}
+                            </Button>
+                            <Button variant="outline" onClick={() => handleShowDetails(course)}>
+                              বিস্তারিত
+                            </Button>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </Card>
-                ))
+                    </Card>
+                  );
+                })
               )}
             </div>
           </div>
@@ -314,6 +431,15 @@ const Dashboard = () => {
           </div>
         </div>
       </div>
+
+      {/* Course Details Modal */}
+      <CourseDetailsModal
+        course={selectedCourse}
+        open={detailsModalOpen}
+        onOpenChange={setDetailsModalOpen}
+        modules={selectedCourse ? courseModules[selectedCourse.id] : []}
+        onStartCourse={() => navigate(`/learning?courseId=${selectedCourse?.id}`)}
+      />
     </div>
   );
 };
