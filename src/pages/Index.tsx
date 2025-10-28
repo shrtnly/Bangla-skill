@@ -13,7 +13,8 @@ import {
   Target,
   Trophy,
   ArrowRight,
-  Loader2
+  Loader2,
+  Info
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -264,15 +265,26 @@ const Index = () => {
                       {course.rating || 0}
                     </div>
                   </div>
-                  <div className="flex items-center justify-between pt-2">
-                    <span className="text-sm text-muted-foreground">কোর্স</span>
+                  <div className="flex gap-2 pt-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="flex-1 group hover:bg-primary/10 hover:border-primary/50 hover:text-primary hover:shadow-sm transition-all duration-200 font-medium"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                      }}
+                      title="কোর্সের সম্পূর্ণ বিবরণ দেখুন"
+                    >
+                      <Info className="w-3 h-3 mr-1 group-hover:scale-110 group-hover:rotate-12 transition-all duration-200" />
+                      বিস্তারিত
+                    </Button>
                     <Button
                       size="sm"
                       onClick={(e) => {
                         e.stopPropagation();
                         handleEnroll(course.id);
                       }}
-                      className="bg-primary text-white hover:bg-primary/90"
+                      className="flex-1 bg-primary text-white hover:bg-primary/90 font-medium"
                     >
                       ভর্তি হন
                     </Button>

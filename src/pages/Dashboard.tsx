@@ -3,7 +3,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { BookOpen, Trophy, Star, TrendingUp, Award, Target, Clock, CircleCheck as CheckCircle, Lock, Play, LogOut, User, Settings, Moon, Sun } from "lucide-react";
+import { BookOpen, Trophy, Star, TrendingUp, Award, Target, Clock, CircleCheck as CheckCircle, Lock, Play, LogOut, User, Settings, Moon, Sun, Info, Eye } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -345,16 +345,22 @@ const Dashboard = () => {
                             </div>
                           )}
 
-                          <div className="flex gap-3">
+                          <div className="flex flex-col sm:flex-row gap-3">
                             <Button
-                              className="btn-success"
+                              className="btn-success flex-1"
                               onClick={() => navigate(`/learning?courseId=${course.id}`)}
                             >
                               <Play className="w-4 h-4 mr-2" />
                               {hasStarted ? "চালিয়ে যান" : "শুরু করুন"}
                             </Button>
-                            <Button variant="outline" onClick={() => handleShowDetails(course)}>
-                              বিস্তারিত
+                            <Button
+                              variant="outline"
+                              className="flex-1 group hover:bg-primary/10 hover:border-primary/50 hover:text-primary hover:shadow-md transition-all duration-200 font-medium"
+                              onClick={() => handleShowDetails(course)}
+                              title="কোর্সের সম্পূর্ণ বিবরণ, কারিকুলাম এবং শিখার ফলাফল দেখুন"
+                            >
+                              <Info className="w-4 h-4 mr-2 group-hover:scale-110 group-hover:rotate-12 transition-all duration-200" />
+                              বিস্তারিত দেখুন
                             </Button>
                           </div>
                         </div>
