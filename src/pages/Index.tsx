@@ -270,9 +270,7 @@ const Index = () => {
                       size="sm"
                       variant="outline"
                       className="flex-1 group hover:bg-primary/10 hover:border-primary/50 hover:text-primary hover:shadow-sm transition-all duration-200 font-medium"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                      }}
+                     onClick={() => handleShowDetails(course)}
                       title="কোর্সের সম্পূর্ণ বিবরণ দেখুন"
                     >
                       <Info className="w-3 h-3 mr-1 group-hover:scale-110 group-hover:rotate-12 transition-all duration-200" />
