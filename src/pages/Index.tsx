@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { useTheme } from "@/hooks/useTheme";
 import {
   BookOpen,
   Award,
@@ -14,7 +15,9 @@ import {
   Trophy,
   ArrowRight,
   Loader2,
-  Info
+  Info,
+  Sun,
+  Moon
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -25,6 +28,7 @@ const Index = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
+  const { theme, setTheme } = useTheme(); // ✅ Dark/Light Mode
   const [courses, setCourses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -52,7 +56,8 @@ const Index = () => {
           badge: "trending",
           total_students: 2847,
           rating: 4.8,
-          image_url: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&q=80"
+          image_url:
+            "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&q=80"
         },
         {
           id: "temp-2",
@@ -61,7 +66,8 @@ const Index = () => {
           badge: "new",
           total_students: 1523,
           rating: 4.9,
-          image_url: "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=800&q=80"
+          image_url:
+            "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=800&q=80"
         },
         {
           id: "temp-3",
@@ -70,7 +76,8 @@ const Index = () => {
           badge: "best",
           total_students: 3421,
           rating: 4.7,
-          image_url: "https://images.unsplash.com/photo-1561070791-2526d30994b5?w=800&q=80"
+          image_url:
+            "https://images.unsplash.com/photo-1561070791-2526d30994b5?w=800&q=80"
         },
         {
           id: "temp-4",
@@ -79,8 +86,9 @@ const Index = () => {
           badge: "trending",
           total_students: 1876,
           rating: 4.6,
-          image_url: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&q=80"
-        },
+          image_url:
+            "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&q=80"
+        }
       ]);
     } finally {
       setLoading(false);
@@ -107,14 +115,7 @@ const Index = () => {
       icon: Trophy,
       title: "রিওয়ার্ড সিস্টেম",
       description: "পয়েন্ট ও অর্জন দিয়ে শিক্ষার যাত্রা উপভোগ করুন"
-    },
-  ];
-
-  const stats = [
-    { value: "১০,০০০+", label: "শিক্ষার্থী" },
-    { value: "৫০+", label: "কোর্স" },
-    { value: "৮,৫০০+", label: "সার্টিফিকেট" },
-    { value: "৪.৮", label: "রেটিং" },
+    }
   ];
 
   const handleEnroll = async (courseId: string) => {
@@ -122,7 +123,7 @@ const Index = () => {
       toast({
         title: "লগইন প্রয়োজন",
         description: "কোর্সে ভর্তি হতে প্রথমে লগইন করুন",
-        variant: "destructive",
+        variant: "destructive"
       });
       navigate("/auth");
       return;
@@ -141,24 +142,22 @@ const Index = () => {
       if (existing) {
         toast({
           title: "ইতিমধ্যে ভর্তি",
-          description: "আপনি ইতিমধ্যে এই কোর্সে ভর্তি হয়েছেন",
+          description: "আপনি ইতিমধ্যে এই কোর্সে ভর্তি হয়েছেন"
         });
         navigate("/learning");
         return;
       }
 
-      const { error } = await supabase
-        .from("enrollments")
-        .insert({
-          user_id: user.id,
-          course_id: courseId,
-        });
+      const { error } = await supabase.from("enrollments").insert({
+        user_id: user.id,
+        course_id: courseId
+      });
 
       if (error) throw error;
 
       toast({
         title: "ভর্তি সফল!",
-        description: "আপনি সফলভাবে কোর্সে ভর্তি হয়েছেন",
+        description: "আপনি সফলভাবে কোর্সে ভর্তি হয়েছেন"
       });
 
       navigate("/learning");
@@ -166,13 +165,13 @@ const Index = () => {
       toast({
         title: "ত্রুটি",
         description: error.message || "ভর্তি করতে সমস্যা হয়েছে",
-        variant: "destructive",
+        variant: "destructive"
       });
     }
   };
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-background text-foreground transition-colors duration-300">
       {/* Header */}
       <header className="border-b bg-card/50 backdrop-blur-sm sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
@@ -182,44 +181,62 @@ const Index = () => {
             </div>
             <span className="text-xl font-bold">শিক্ষা প্ল্যাটফর্ম</span>
           </div>
-          <Button onClick={() => navigate("/auth")} className="btn-hero">
-            লগইন করুন
-          </Button>
+          <div className="flex items-center gap-3">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+            >
+              <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+              <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+              <span className="sr-only">Toggle theme</span>
+            </Button>
+            <Button onClick={() => navigate("/auth")} className="btn-hero">
+              লগইন করুন
+            </Button>
+          </div>
         </div>
       </header>
 
       {/* Hero Section */}
-      <section className="container mx-auto px-4 py-20 lg:py-32">
-        <div className="max-w-4xl mx-auto text-center space-y-6 animate-fade-in">
-          <Badge className="bg-accent/10 text-accent border-accent/20 hover:bg-accent/20">
-            বাংলায় সেরা শিক্ষা প্ল্যাটফর্ম
-          </Badge>
-          <h1 className="text-4xl md:text-6xl font-bold leading-tight">
-            আপনার স্বপ্নের ক্যারিয়ার
-            <span className="block mt-2 bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-              শুরু হোক এখানে
-            </span>
-          </h1>
-          <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
-            বিশ্বমানের শিক্ষা এখন বাংলায়। আপনার পছন্দের বিষয়ে দক্ষতা অর্জন করুন এবং পেশাদার সার্টিফিকেট পান।
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
-            <Button size="lg" className="btn-hero text-lg" onClick={() => navigate("/auth")}>
-              বিনামূল্যে শুরু করুন
-              <ArrowRight className="ml-2 w-5 h-5" />
-            </Button>
-            <Button size="lg" variant="outline" className="text-lg">
-              কোর্স দেখুন
-            </Button>
-          </div>
+      <section className="container mx-auto px-4 py-20 lg:py-32 text-center">
+        <Badge className="bg-accent/10 text-accent border-accent/20 hover:bg-accent/20">
+          বাংলায় সেরা শিক্ষা প্ল্যাটফর্ম
+        </Badge>
+        <h1 className="text-4xl md:text-6xl font-bold leading-tight mt-6">
+          আপনার স্বপ্নের ক্যারিয়ার{" "}
+          <span className="block bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+            শুরু হোক এখানে
+          </span>
+        </h1>
+        <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mt-4">
+          বিশ্বমানের শিক্ষা এখন বাংলায়। আপনার পছন্দের বিষয়ে দক্ষতা অর্জন করুন এবং
+          পেশাদার সার্টিফিকেট পান।
+        </p>
+        <div className="flex flex-col sm:flex-row gap-4 justify-center mt-8">
+          <Button
+            size="lg"
+            className="btn-hero text-lg"
+            onClick={() => navigate("/auth")}
+          >
+            বিনামূল্যে শুরু করুন
+            <ArrowRight className="ml-2 w-5 h-5" />
+          </Button>
+          <Button size="lg" variant="outline" className="text-lg">
+            কোর্স দেখুন
+          </Button>
         </div>
       </section>
 
       {/* Featured Courses */}
       <section className="container mx-auto px-4 py-20">
         <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">জনপ্রিয় কোর্সসমূহ</h2>
-          <p className="text-muted-foreground text-lg">আপনার ক্যারিয়ারের জন্য সেরা কোর্স বেছে নিন</p>
+          <h2 className="text-3xl md:text-4xl font-bold mb-4">
+            জনপ্রিয় কোর্সসমূহ
+          </h2>
+          <p className="text-muted-foreground text-lg">
+            আপনার ক্যারিয়ারের জন্য সেরা কোর্স বেছে নিন
+          </p>
         </div>
 
         {loading ? (
@@ -237,7 +254,10 @@ const Index = () => {
               >
                 <div className="relative h-48">
                   <img
-                    src={course.image_url || "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&q=80"}
+                    src={
+                      course.image_url ||
+                      "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&q=80"
+                    }
                     alt={course.title}
                     className="w-full h-full object-cover"
                   />
@@ -254,7 +274,9 @@ const Index = () => {
                   </Badge>
                 </div>
                 <div className="p-5 space-y-3">
-                  <h3 className="font-semibold text-lg line-clamp-2">{course.title}</h3>
+                  <h3 className="font-semibold text-lg line-clamp-2">
+                    {course.title}
+                  </h3>
                   <div className="flex items-center gap-4 text-sm text-muted-foreground">
                     <div className="flex items-center gap-1">
                       <Users className="w-4 h-4" />
@@ -265,19 +287,16 @@ const Index = () => {
                       {course.rating || 0}
                     </div>
                   </div>
-                  <div className="flex gap-2 pt-2">
-
-                    <Button
-                      size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleEnroll(course.id);
-                      }}
-                      className="flex-1 bg-primary text-white hover:bg-primary/90 font-medium"
-                    >
-                      ভর্তি হন
-                    </Button>
-                  </div>
+                  <Button
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleEnroll(course.id);
+                    }}
+                    className="w-full bg-primary text-white hover:bg-primary/90 font-medium"
+                  >
+                    ভর্তি হন
+                  </Button>
                 </div>
               </Card>
             ))}
@@ -289,14 +308,18 @@ const Index = () => {
       <section className="bg-secondary/50 py-20">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">কেন আমাদের বেছে নিবেন?</h2>
-            <p className="text-muted-foreground text-lg">আপনার শিক্ষার যাত্রা সহজ ও কার্যকর করতে</p>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">
+              কেন আমাদের বেছে নিবেন?
+            </h2>
+            <p className="text-muted-foreground text-lg">
+              আপনার শিক্ষার যাত্রা সহজ ও কার্যকর করতে
+            </p>
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
             {features.map((feature, index) => (
-              <Card 
-                key={index} 
+              <Card
+                key={index}
                 className="p-6 text-center space-y-4 card-hover animate-scale-in"
                 style={{ animationDelay: `${index * 100}ms` }}
               >
@@ -304,49 +327,34 @@ const Index = () => {
                   <feature.icon className="w-8 h-8 text-primary" />
                 </div>
                 <h3 className="font-semibold text-lg">{feature.title}</h3>
-                <p className="text-muted-foreground text-sm">{feature.description}</p>
+                <p className="text-muted-foreground text-sm">
+                  {feature.description}
+                </p>
               </Card>
             ))}
           </div>
         </div>
       </section>
 
-            {/* Stats Section 
-      <section className="bg-gradient-to-r from-primary to-primary-glow py-16">
-        <div className="container mx-auto px-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-white">
-            {stats.map((stat, index) => (
-              <div key={index} className="text-center animate-scale-in" style={{ animationDelay: `${index * 100}ms` }}>
-                <div className="text-3xl md:text-5xl font-bold mb-2">{stat.value}</div>
-                <div className="text-sm md:text-base opacity-90">{stat.label}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-*/}
-      
       {/* CTA Section */}
       <section className="container mx-auto px-4 py-20">
         <Card className="relative overflow-hidden bg-gradient-to-r from-primary to-primary-glow p-12 md:p-16 text-center text-white">
           <div className="relative z-10 space-y-6">
-            <h2 className="text-3xl md:text-4xl font-bold">আজই শুরু করুন আপনার শিক্ষার যাত্রা</h2>
+            <h2 className="text-3xl md:text-4xl font-bold">
+              আজই শুরু করুন আপনার শিক্ষার যাত্রা
+            </h2>
             <p className="text-lg opacity-90 max-w-2xl mx-auto">
               বিনামূল্যে রেজিস্ট্রেশন করুন এবং অ্যাক্সেস পান হাজারো মানসম্পন্ন কোর্সে
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
-              <Button 
-                size="lg" 
-                className="bg-white text-primary hover:bg-white/90 text-lg font-semibold"
-                onClick={() => navigate("/auth")}
-              >
-                <CheckCircle className="mr-2 w-5 h-5" />
-                বিনামূল্যে শুরু করুন
-              </Button>
-            </div>
+            <Button
+              size="lg"
+              className="bg-white text-primary hover:bg-white/90 text-lg font-semibold"
+              onClick={() => navigate("/auth")}
+            >
+              <CheckCircle className="mr-2 w-5 h-5" />
+              বিনামূল্যে শুরু করুন
+            </Button>
           </div>
-          <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4xIj48cGF0aCBkPSJNMzYgMzRjMC0yLjIxLTEuNzktNC00LTRzLTQgMS43OS00IDQgMS43OSA0IDQgNCA0LTEuNzkgNC00em0wLTEwYzAtMi4yMS0xLjc5LTQtNC00cy00IDEuNzktNCA0IDEuNzkgNCA0IDQgNC0xLjc5IDQtNHptMC0xMGMwLTIuMjEtMS43OS00LTQtNHMtNCAxLjc5LTQgNCAxLjc5IDQgNCA0IDQtMS43OSA0LTR6Ii8+PC9nPjwvZz48L3N2Zz4=')] opacity-10"></div>
         </Card>
       </section>
 
