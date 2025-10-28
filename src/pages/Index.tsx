@@ -184,7 +184,6 @@ const Index = () => {
             <span className="text-xl font-bold">শিক্ষা প্ল্যাটফর্ম</span>
           </div>
           <div className="flex items-center gap-3">
-         
           <Button onClick={() => navigate("/auth")} className="btn-hero">
             লগইন করুন
           </Button>
