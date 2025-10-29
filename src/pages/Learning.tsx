@@ -312,7 +312,7 @@ const Learning = () => {
               </Button>
               <Button
                 variant="ghost"
-                className="w-full justify-start gap-3 text-base hover:text-[#895cd6]"
+                className="w-full justify-start gap-3 text-base text-black dark:text-white hover:text-white hover:bg-[#895cd6]"
                 onClick={() => navigate("/profile")}
               >
                 <User className="w-5 h-5" />
