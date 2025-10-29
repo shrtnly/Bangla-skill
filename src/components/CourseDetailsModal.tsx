@@ -1,10 +1,33 @@
 import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
 import { Card } from "@/components/ui/card";
-import { BookOpen, Users, Star, Clock, Award, Play, CheckCircle, Info, ListChecks, GraduationCap, Target } from "lucide-react";
+import {
+  BookOpen,
+  Users,
+  Star,
+  Clock,
+  Award,
+  Play,
+  CheckCircle,
+  Info,
+  ListChecks,
+  GraduationCap,
+  Target,
+} from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 interface Course {
@@ -37,33 +60,45 @@ export function CourseDetailsModal({
   open,
   onOpenChange,
   modules = [],
-  onStartCourse
+  onStartCourse,
 }: CourseDetailsModalProps) {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("overview");
 
   if (!course) return null;
 
-  const totalDuration = modules.reduce((sum, mod) => sum + (mod.duration_minutes || 0), 0);
-  const totalChapters = modules.reduce((sum, mod) => sum + (mod.total_chapters || 0), 0);
+  const totalDuration = modules.reduce(
+    (sum, mod) => sum + (mod.duration_minutes || 0),
+    0
+  );
+  const totalChapters = modules.reduce(
+    (sum, mod) => sum + (mod.total_chapters || 0),
+    0
+  );
 
   const handleStart = () => {
-    if (onStartCourse) {
-      onStartCourse();
-    } else {
-      navigate(`/learning?courseId=${course.id}`);
-    }
+    if (onStartCourse) onStartCourse();
+    else navigate(`/learning?courseId=${course.id}`);
     onOpenChange(false);
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-5xl max-h-[90vh] overflow-hidden flex flex-col">
-        <DialogHeader className="border-b pb-4">
-          <div className="flex items-start justify-between gap-4">
+      <DialogContent className="max-w-5xl w-full h-[90vh] flex flex-col p-0 overflow-hidden">
+        {/* Header */}
+        <DialogHeader className="p-4 sm:p-6 border-b bg-background sticky top-0 z-10">
+          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
             <div className="flex-1">
-              <DialogTitle className="text-2xl font-bold mb-2">{course.title}</DialogTitle>
-              <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
+              <DialogTitle className="text-xl sm:text-2xl font-bold mb-2 leading-tight">
+                {course.title}
+              </DialogTitle>
+              {course.description && (
+                <DialogDescription className="text-sm text-muted-foreground leading-relaxed">
+                  {course.description}
+                </DialogDescription>
+              )}
+
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground mt-2">
                 <div className="flex items-center gap-1">
                   <Users className="w-4 h-4" />
                   <span>{course.total_students || 0} শিক্ষার্থী</span>
@@ -76,17 +111,23 @@ export function CourseDetailsModal({
                 <span>•</span>
                 <div className="flex items-center gap-1">
                   <Clock className="w-4 h-4" />
-                  <span>{Math.round((totalDuration || course.duration_minutes || 0) / 60)} ঘণ্টা</span>
+                  <span>
+                    {Math.round(
+                      (totalDuration || course.duration_minutes || 0) / 60
+                    )}{" "}
+                    ঘণ্টা
+                  </span>
                 </div>
               </div>
             </div>
+
             <Badge
-              className={`${
+              className={`self-start sm:self-center px-3 py-1 text-sm ${
                 course.badge === "trending"
-                  ? "bg-accent"
+                  ? "bg-accent text-white"
                   : course.badge === "new"
-                  ? "bg-primary"
-                  : "bg-success"
+                  ? "bg-primary text-white"
+                  : "bg-success text-white"
               }`}
             >
               {course.category || "কোর্স"}
@@ -94,81 +135,101 @@ export function CourseDetailsModal({
           </div>
         </DialogHeader>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
-          <TabsList className="w-full grid grid-cols-3 mb-4">
-            <TabsTrigger value="overview" className="flex items-center gap-2">
-              <Info className="w-4 h-4" />
-              <span className="hidden sm:inline">সারসংক্ষেপ</span>
-              <span className="sm:hidden">সারাংশ</span>
-            </TabsTrigger>
-            <TabsTrigger value="curriculum" className="flex items-center gap-2">
-              <ListChecks className="w-4 h-4" />
-              <span className="hidden sm:inline">কারিকুলাম</span>
-              <span className="sm:hidden">বিষয়বস্তু</span>
-            </TabsTrigger>
-            <TabsTrigger value="outcomes" className="flex items-center gap-2">
-              <Target className="w-4 h-4" />
-              <span className="hidden sm:inline">শিক্ষার ফলাফল</span>
-              <span className="sm:hidden">ফলাফল</span>
-            </TabsTrigger>
-          </TabsList>
+        {/* Tabs */}
+        <div className="flex-1 overflow-y-auto px-4 sm:px-6 pb-24">
+          <Tabs
+            value={activeTab}
+            onValueChange={setActiveTab}
+            className="flex flex-col"
+          >
+            <TabsList className="w-full grid grid-cols-3 mb-4 sticky top-0 bg-background z-10 border-b">
+              <TabsTrigger value="overview" className="flex items-center gap-2 text-sm sm:text-base">
+                <Info className="w-4 h-4" />
+                <span>সারসংক্ষেপ</span>
+              </TabsTrigger>
+              <TabsTrigger value="curriculum" className="flex items-center gap-2 text-sm sm:text-base">
+                <ListChecks className="w-4 h-4" />
+                <span>কারিকুলাম</span>
+              </TabsTrigger>
+              <TabsTrigger value="outcomes" className="flex items-center gap-2 text-sm sm:text-base">
+                <Target className="w-4 h-4" />
+                <span>ফলাফল</span>
+              </TabsTrigger>
+            </TabsList>
 
-          <div className="flex-1 overflow-y-auto">
-            <TabsContent value="overview" className="mt-0 space-y-4">
-              {/* Course Image */}
-              <div className="relative w-full h-64 rounded-lg overflow-hidden">
+            {/* Overview */}
+            <TabsContent value="overview" className="space-y-5 mt-0">
+              {/* Thumbnail */}
+              <div className="relative w-full h-48 sm:h-64 rounded-lg overflow-hidden">
                 <img
-                  src={course.thumbnail_url || course.image_url || "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&q=80"}
+                  src={
+                    course.thumbnail_url ||
+                    course.image_url ||
+                    "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&q=80"
+                  }
                   alt={course.title}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
                 />
               </div>
 
-              {/* Course Stats Grid */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <Card className="p-4 text-center">
+              {/* Stats */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <Card className="p-3 sm:p-4 text-center">
                   <BookOpen className="w-6 h-6 mx-auto mb-2 text-primary" />
-                  <div className="text-2xl font-bold text-primary">{course.total_modules || modules.length || 0}</div>
-                  <div className="text-xs text-muted-foreground">মডিউল</div>
+                  <div className="text-lg sm:text-2xl font-bold text-primary">
+                    {course.total_modules || modules.length || 0}
+                  </div>
+                  <div className="text-xs sm:text-sm text-muted-foreground">মডিউল</div>
                 </Card>
-                <Card className="p-4 text-center">
+                <Card className="p-3 sm:p-4 text-center">
                   <GraduationCap className="w-6 h-6 mx-auto mb-2 text-accent" />
-                  <div className="text-2xl font-bold text-accent">{totalChapters || 0}</div>
-                  <div className="text-xs text-muted-foreground">অধ্যায়</div>
+                  <div className="text-lg sm:text-2xl font-bold text-accent">
+                    {totalChapters || 0}
+                  </div>
+                  <div className="text-xs sm:text-sm text-muted-foreground">অধ্যায়</div>
                 </Card>
-                <Card className="p-4 text-center">
+                <Card className="p-3 sm:p-4 text-center">
                   <Clock className="w-6 h-6 mx-auto mb-2 text-success" />
-                  <div className="text-2xl font-bold text-success">{Math.round((totalDuration || 0) / 60)}</div>
-                  <div className="text-xs text-muted-foreground">ঘণ্টা</div>
+                  <div className="text-lg sm:text-2xl font-bold text-success">
+                    {Math.round((totalDuration || 0) / 60)}
+                  </div>
+                  <div className="text-xs sm:text-sm text-muted-foreground">ঘণ্টা</div>
                 </Card>
-                <Card className="p-4 text-center">
+                <Card className="p-3 sm:p-4 text-center">
                   <Award className="w-6 h-6 mx-auto mb-2 text-primary" />
-                  <div className="text-2xl font-bold text-primary">✓</div>
-                  <div className="text-xs text-muted-foreground">সার্টিফিকেট</div>
+                  <div className="text-lg sm:text-2xl font-bold text-primary">✓</div>
+                  <div className="text-xs sm:text-sm text-muted-foreground">
+                    সার্টিফিকেট
+                  </div>
                 </Card>
               </div>
 
-              {/* Description */}
-              <Card className="p-6">
-                <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
+              {/* About Course */}
+              <Card className="p-4 sm:p-6">
+                <h3 className="text-base sm:text-lg font-semibold mb-3 flex items-center gap-2">
                   <Info className="w-5 h-5 text-primary" />
                   কোর্স সম্পর্কে
                 </h3>
-                <p className="text-muted-foreground leading-relaxed">
-                  {course.description || "এই কোর্সটি আপনাকে বিস্তারিত জ্ঞান প্রদান করবে এবং আপনার দক্ষতা বৃদ্ধিতে সহায়তা করবে।"}
+                <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
+                  {course.description ||
+                    "এই কোর্সটি আপনাকে বিস্তারিত জ্ঞান প্রদান করবে এবং আপনার দক্ষতা বৃদ্ধিতে সহায়তা করবে।"}
                 </p>
               </Card>
 
-              {/* Difficulty & Requirements */}
+              {/* Difficulty */}
               <div className="grid md:grid-cols-2 gap-4">
-                <Card className="p-6">
-                  <h4 className="font-semibold mb-3">কোর্সের স্তর</h4>
+                <Card className="p-4 sm:p-6">
+                  <h4 className="font-semibold mb-3 text-sm sm:text-base">
+                    কোর্সের স্তর
+                  </h4>
                   <Badge variant="outline" className="text-sm">
                     {course.difficulty_level || "সব স্তরের জন্য"}
                   </Badge>
                 </Card>
-                <Card className="p-6">
-                  <h4 className="font-semibold mb-3">প্রয়োজনীয়তা</h4>
+                <Card className="p-4 sm:p-6">
+                  <h4 className="font-semibold mb-3 text-sm sm:text-base">
+                    প্রয়োজনীয়তা
+                  </h4>
                   <p className="text-sm text-muted-foreground">
                     কোনো পূর্ব অভিজ্ঞতার প্রয়োজন নেই
                   </p>
@@ -176,9 +237,10 @@ export function CourseDetailsModal({
               </div>
             </TabsContent>
 
-            <TabsContent value="curriculum" className="mt-0 space-y-4">
-              <Card className="p-6">
-                <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+            {/* Curriculum */}
+            <TabsContent value="curriculum" className="space-y-4 mt-0">
+              <Card className="p-4 sm:p-6">
+                <h3 className="text-base sm:text-lg font-semibold mb-4 flex items-center gap-2">
                   <ListChecks className="w-5 h-5 text-primary" />
                   কোর্স কারিকুলাম
                   <Badge variant="outline" className="ml-auto">
@@ -186,7 +248,7 @@ export function CourseDetailsModal({
                   </Badge>
                 </h3>
 
-                {modules && modules.length > 0 ? (
+                {modules.length > 0 ? (
                   <div className="space-y-3">
                     {modules.map((module, index) => (
                       <div
@@ -238,17 +300,20 @@ export function CourseDetailsModal({
               </Card>
             </TabsContent>
 
-            <TabsContent value="outcomes" className="mt-0 space-y-4">
-              <Card className="p-6">
-                <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+            {/* Outcomes */}
+            <TabsContent value="outcomes" className="space-y-4 mt-0">
+              <Card className="p-4 sm:p-6">
+                <h3 className="text-base sm:text-lg font-semibold mb-4 flex items-center gap-2">
                   <Target className="w-5 h-5 text-primary" />
                   আপনি কী শিখবেন
                 </h3>
-
-                {course.learning_outcomes && course.learning_outcomes.length > 0 ? (
-                  <div className="grid md:grid-cols-2 gap-4">
-                    {course.learning_outcomes.map((outcome, index) => (
-                      <div key={index} className="flex items-start gap-3 p-3 rounded-lg bg-success/5 border border-success/20">
+                {(course.learning_outcomes?.length ?? 0) > 0 ? (
+                  <div className="grid md:grid-cols-2 gap-3 sm:gap-4">
+                    {course.learning_outcomes!.map((outcome, index) => (
+                      <div
+                        key={index}
+                        className="flex items-start gap-3 p-3 rounded-lg bg-success/5 border border-success/20"
+                      >
                         <CheckCircle className="w-5 h-5 text-success flex-shrink-0 mt-0.5" />
                         <span className="text-sm">{outcome}</span>
                       </div>
@@ -260,9 +325,12 @@ export function CourseDetailsModal({
                       "কোর্সের মূল বিষয়বস্তু সম্পর্কে গভীর ধারণা অর্জন করবেন",
                       "বাস্তব প্রজেক্ট তৈরি করার দক্ষতা অর্জন করবেন",
                       "ইন্ডাস্ট্রি স্ট্যান্ডার্ড টুলস ব্যবহার করতে শিখবেন",
-                      "প্রফেশনাল সার্টিফিকেট অর্জন করবেন"
+                      "প্রফেশনাল সার্টিফিকেট অর্জন করবেন",
                     ].map((outcome, index) => (
-                      <div key={index} className="flex items-start gap-3 p-3 rounded-lg bg-success/5 border border-success/20">
+                      <div
+                        key={index}
+                        className="flex items-start gap-3 p-3 rounded-lg bg-success/5 border border-success/20"
+                      >
                         <CheckCircle className="w-5 h-5 text-success flex-shrink-0 mt-0.5" />
                         <span className="text-sm">{outcome}</span>
                       </div>
@@ -270,35 +338,24 @@ export function CourseDetailsModal({
                   </div>
                 )}
               </Card>
-
-              <Card className="p-6 bg-gradient-to-br from-primary/5 to-accent/5">
-                <h4 className="font-semibold mb-3">কোর্স সম্পন্ন করার পর</h4>
-                <ul className="space-y-2 text-sm text-muted-foreground">
-                  <li className="flex items-start gap-2">
-                    <CheckCircle className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
-                    <span>প্রফেশনাল সার্টিফিকেট পাবেন</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
-                    <span>আপনার প্রোফাইলে পয়েন্ট অর্জন করবেন</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
-                    <span>পরবর্তী লেভেলের কোর্স আনলক হবে</span>
-                  </li>
-                </ul>
-              </Card>
             </TabsContent>
-          </div>
-        </Tabs>
+          </Tabs>
+        </div>
 
-        {/* Action Buttons - Fixed at Bottom */}
-        <div className="flex gap-3 pt-4 border-t mt-4">
-          <Button onClick={handleStart} className="flex-1 bg-success hover:bg-success/90 h-12">
+        {/* Bottom Buttons */}
+        <div className="flex gap-3 border-t bg-background p-4 sm:p-6 sticky bottom-0 z-10">
+          <Button
+            onClick={handleStart}
+            className="flex-1 bg-success hover:bg-success/90 h-12 text-base"
+          >
             <Play className="w-5 h-5 mr-2" />
             কোর্স শুরু করুন
           </Button>
-          <Button variant="outline" onClick={() => onOpenChange(false)} className="h-12">
+          <Button
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            className="h-12 text-base"
+          >
             বন্ধ করুন
           </Button>
         </div>
