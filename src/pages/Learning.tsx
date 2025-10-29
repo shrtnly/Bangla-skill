@@ -3,30 +3,18 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import {
-  BookOpen,
-  CheckCircle,
-  Lock,
-  ChevronRight,
-  Play,
-  ArrowLeft,
-  Trophy,
-  Star,
-  Loader2,
-  Clock,
-  Award,
-  Menu,
-  Bell,
-  Globe
-} from "lucide-react";
+import { BookOpen, CheckCircle, Lock, ChevronRight, Play, ArrowLeft, Trophy, Star, Loader2, Clock, Award, Moon, Sun, User } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { useTheme } from "@/hooks/useTheme";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const Learning = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { theme, setTheme } = useTheme();
   const [searchParams] = useState(() => new URLSearchParams(window.location.search));
 
   const [loading, setLoading] = useState(true);
@@ -291,108 +279,70 @@ const Learning = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-background">
-      {/* Header */}
       <header className="border-b bg-white dark:bg-card sticky top-0 z-50 shadow-sm">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" className="lg:hidden">
-              <Menu className="w-5 h-5" />
-            </Button>
-            <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate("/")}>
-              <div className="w-10 h-10 rounded-full bg-yellow-400 flex items-center justify-center">
-                <span className="text-2xl">😊</span>
-              </div>
-              <span className="text-xl font-bold">Ostad</span>
+          <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate("/")}>
+            <div className="w-10 h-10 rounded-full bg-[#895cd6] flex items-center justify-center text-white font-bold text-lg">
+              O
             </div>
+            <span className="text-xl font-bold text-[#895cd6]">Ostad</span>
           </div>
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" className="relative">
-              <Bell className="w-5 h-5" />
-              <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-            </Button>
-            <Button variant="ghost" size="sm" className="gap-2">
-              <Globe className="w-4 h-4" />
-              <span className="hidden sm:inline">EN</span>
-            </Button>
-            <Button variant="ghost" size="icon">
-              <Menu className="w-5 h-5" />
+          <div className="flex items-center gap-3">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}>
+              <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0 text-[#895cd6]" />
+              <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100 text-[#f5812e]" />
             </Button>
           </div>
         </div>
       </header>
 
       <div className="container mx-auto px-4 py-6">
-
         <div className="grid lg:grid-cols-4 gap-6">
-          {/* Sidebar Navigation */}
           <div className="lg:col-span-1">
             <Card className="p-4 space-y-2">
-              <Button variant="ghost" className="w-full justify-start gap-3 text-base" onClick={() => navigate("/")}>
-                <BookOpen className="w-5 h-5" />
-                ক্লাস জয়েনিং
-              </Button>
-              <Button variant="default" className="w-full justify-start gap-3 text-base bg-yellow-400 hover:bg-yellow-500 text-black">
+            <Button
+                variant="default"
+                className="w-full justify-start gap-3 text-base bg-[#895cd6] hover:bg-[#7b4dc4] text-white"
+              >
                 <BookOpen className="w-5 h-5" />
                 আমার কোর্স
               </Button>
-              <Button variant="ghost" className="w-full justify-start gap-3 text-base">
-                <Play className="w-5 h-5" />
-                রেকর্ডিং
-              </Button>
-              <Button variant="ghost" className="w-full justify-start gap-3 text-base">
-                <Award className="w-5 h-5" />
-                রিসোর্স
-              </Button>
-              <Button variant="ghost" className="w-full justify-start gap-3 text-base" onClick={() => navigate("/profile")}>
-                <Trophy className="w-5 h-5" />
-                তব রেজুমে
-                <Badge variant="secondary" className="ml-auto bg-orange-500 text-white">নতুন</Badge>
-              </Button>
-              <Button variant="ghost" className="w-full justify-start gap-3 text-base">
-                <Star className="w-5 h-5" />
-                Build My CV
-                <Badge variant="secondary" className="ml-auto bg-orange-500 text-white">নতুন</Badge>
+              <Button
+                variant="ghost"
+                className="w-full justify-start gap-3 text-base hover:text-[#895cd6]"
+                onClick={() => navigate("/profile")}
+              >
+                <User className="w-5 h-5" />
+                আমার প্রোফাইল
               </Button>
             </Card>
           </div>
 
-          {/* Main Content - Course Selection */}
           <div className="lg:col-span-3 space-y-6">
-            {/* Banner */}
-            <Card className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white">
-              <div className="p-6 flex items-center justify-between gap-4">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
-                    <Trophy className="w-7 h-7" />
-                  </div>
-                  <div>
-                    <h2 className="font-bold text-lg mb-1">ইন্টারভিউ এর প্রাক্টিস করুন Mocku-র সাথে</h2>
-                    <p className="text-sm text-white/90">এখনই সাইন আপ করে ইন্টারভিউয়ের প্র্যাক্টিস শুরু করুন</p>
-                  </div>
-                </div>
-                <Button className="bg-yellow-400 hover:bg-yellow-500 text-black font-semibold">
-                  বিস্তারিত দেখি →
-                </Button>
-              </div>
-            </Card>
-
-            {/* Course Tabs */}
-            {viewMode === 'list' && (
-              <>
-                <div className="flex items-center justify-between">
-                  <h2 className="text-2xl font-bold">আমার কোর্সসমূহ</h2>
-                  <div className="flex gap-2">
-                    <Button variant="default" className="bg-gray-900 hover:bg-gray-800 text-white">
-                      সব কোর্সসমূহ
-                    </Button>
-                    <Button variant="outline">
-                      অনুবাহী কোর্সসমূহ
-                    </Button>
-                  </div>
+            <Tabs defaultValue="all" className="w-full">
+            <div className="flex items-center justify-between">
+                  <h2 className="text-2xl font-bold text-[#895cd6]">আমার কোর্সসমূহ</h2>
+                  <TabsList className="bg-white dark:bg-card border border-[#895cd6]/20">
+                  <TabsTrigger
+                    value="all"
+                    className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#895cd6] data-[state=active]:to-[#7b4dc4] data-[state=active]:text-white"
+                  >
+                    সব কোর্স
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="ongoing"
+                    className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#f5812e] data-[state=active]:to-[#e36e1f] data-[state=active]:text-white"
+                  >
+                    আনফিনিশড
+                  </TabsTrigger>
+                </TabsList>
                 </div>
 
-                {/* Course Cards Grid */}
-                <div className="grid md:grid-cols-2 gap-4">
+              <TabsContent value="all">
+              <div className="grid md:grid-cols-2 gap-4">
               {enrollments.map((enrollment) => {
                 const course = enrollment.courses;
                 const progress = courseProgress[course.id];
@@ -410,23 +360,19 @@ const Learning = () => {
                       />
                       <div className="absolute top-3 left-3">
                         {!hasStarted ? (
-                          <Badge className="bg-teal-500 hover:bg-teal-600 text-white">
-                            আগামীকাল
+                          <Badge className="bg-gradient-to-r from-[#895cd6] to-[#7b4dc4] hover:opacity-90 text-white border-0">
+                            নতুন কোর্স
                           </Badge>
                         ) : progressPercent === 100 ? (
-                          <Badge className="bg-green-500 hover:bg-green-600 text-white">
-                            ফিনিশড
+                          <Badge className="bg-gradient-to-r from-green-500 to-green-600 hover:opacity-90 text-white border-0">
+                            <CheckCircle className="w-3 h-3 mr-1" />
+                            সম্পন্ন
                           </Badge>
                         ) : (
-                          <Badge className="bg-orange-500 hover:bg-orange-600 text-white">
-                            আনফিনিশড
+                          <Badge className="bg-gradient-to-r from-[#f5812e] to-[#e36e1f] hover:opacity-90 text-white border-0">
+                            {progressPercent}% আনফিনিশড
                           </Badge>
                         )}
-                      </div>
-                      <div className="absolute top-3 right-3">
-                        <Badge variant="secondary" className="bg-white/90 text-black">
-                          ব্যাচ ১ · সম্পন্ন হয়েছে
-                        </Badge>
                       </div>
                     </div>
 
@@ -448,7 +394,7 @@ const Learning = () => {
                         <div className="space-y-1">
                           <div className="flex justify-between text-xs">
                             <span className="text-muted-foreground">{progress?.completed || 0}/{progress?.total || 0} মডিউল</span>
-                            <span className={progressPercent === 100 ? "text-green-600 font-medium" : "text-red-500 font-medium"}>
+                            <span className={progressPercent === 100 ? "text-green-600 font-medium" : "text-[#f5812e] font-medium"}>
                               {progressPercent === 100 ? "সম্পন্ন" : "আনফিনিশড"}
                             </span>
                           </div>
@@ -458,12 +404,12 @@ const Learning = () => {
 
                       <div className="flex gap-2 pt-2">
                         <Button
-                          className="flex-1 bg-gray-900 hover:bg-gray-800 text-white"
+                          className="flex-1 bg-gradient-to-r from-[#895cd6] to-[#7b4dc4] hover:opacity-90 text-white"
                           onClick={() => handleViewCourseModules(course.id)}
                         >
                           STUDY PLAN
                         </Button>
-                        <Button variant="outline" className="flex-1">
+                        <Button variant="outline" className="flex-1 border-[#f5812e] text-[#f5812e] hover:bg-[#f5812e] hover:text-white">
                           রিসোর্স
                           <Star className="w-4 h-4 ml-1" />
                         </Button>
@@ -473,10 +419,79 @@ const Learning = () => {
                 );
               })}
                 </div>
-              </>
-            )}
+              </TabsContent>
 
-            {/* Modules View */}
+              <TabsContent value="ongoing">
+              <div className="grid md:grid-cols-2 gap-4">
+              {enrollments.filter((e) => courseProgress[e.courses.id]?.percent < 100).map((enrollment) => {
+                const course = enrollment.courses;
+                const progress = courseProgress[course.id];
+                const progressPercent = progress?.percent || 0;
+                const courseModulesArray = courseModules[course.id] || [];
+
+                return (
+                  <Card key={course.id} className="overflow-hidden hover:shadow-lg transition-shadow">
+                    <div className="relative">
+                      <img
+                        src={course.thumbnail_url || course.image_url || "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=400&q=80"}
+                        alt={course.title}
+                        className="w-full h-48 object-cover"
+                      />
+                      <div className="absolute top-3 left-3">
+                        {
+                          <Badge className="bg-gradient-to-r from-[#f5812e] to-[#e36e1f] hover:opacity-90 text-white border-0">
+                            {progressPercent}% আনফিনিশড
+                          </Badge>
+                        }
+                      </div>
+                    </div>
+
+                    <div className="p-4 space-y-3">
+                      <h3 className="font-bold text-lg">{course.title}</h3>
+
+                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                        <span className="flex items-center gap-1">
+                          <BookOpen className="w-4 h-4" />
+                          {courseModulesArray.length} টি মডিউল
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Clock className="w-4 h-4" />
+                          {Math.round(courseModulesArray.reduce((sum, m) => sum + (m.duration_minutes || 0), 0) / 60)} ঘন্টা
+                        </span>
+                      </div>
+
+                      {progressPercent > 0 && (
+                        <div className="space-y-1">
+                          <div className="flex justify-between text-xs">
+                            <span className="text-muted-foreground">{progress?.completed || 0}/{progress?.total || 0} মডিউল</span>
+                            <span className="text-[#f5812e] font-medium">
+                              আনফিনিশড
+                            </span>
+                          </div>
+                          <Progress value={progressPercent} className="h-2" />
+                        </div>
+                      )}
+
+                      <div className="flex gap-2 pt-2">
+                        <Button
+                          className="flex-1 bg-gradient-to-r from-[#895cd6] to-[#7b4dc4] hover:opacity-90 text-white"
+                          onClick={() => handleViewCourseModules(course.id)}
+                        >
+                          STUDY PLAN
+                        </Button>
+                        <Button variant="outline" className="flex-1 border-[#f5812e] text-[#f5812e] hover:bg-[#f5812e] hover:text-white">
+                          রিসোর্স
+                          <Star className="w-4 h-4 ml-1" />
+                        </Button>
+                      </div>
+                    </div>
+                  </Card>
+                );
+              })}
+                </div>
+              </TabsContent>
+            </Tabs>
+
             {viewMode === 'modules' && selectedCourse && (
               <>
                 <div className="flex items-center justify-between">
@@ -499,7 +514,6 @@ const Learning = () => {
                   </Badge>
                 </div>
 
-                {/* Modules List */}
                 <div className="space-y-3">
                   {modules.length === 0 ? (
                     <Card className="p-12 text-center">
