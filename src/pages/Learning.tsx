@@ -322,175 +322,177 @@ const Learning = () => {
           </div>
 
           <div className="lg:col-span-3 space-y-6">
-            <Tabs defaultValue="all" className="w-full">
-            <div className="flex items-center justify-between">
-                  <h2 className="text-2xl font-bold text-[#895cd6]">আমার কোর্সসমূহ</h2>
-                  <TabsList className="bg-white dark:bg-card border border-[#895cd6]/20">
-                  <TabsTrigger
-                    value="all"
-                    className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#895cd6] data-[state=active]:to-[#7b4dc4] data-[state=active]:text-white"
-                  >
-                    সব কোর্স
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="ongoing"
-                    className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#f5812e] data-[state=active]:to-[#e36e1f] data-[state=active]:text-white"
-                  >
-                    আনফিনিশড
-                  </TabsTrigger>
-                </TabsList>
-                </div>
+            {viewMode === 'list' && (
+              <Tabs defaultValue="all" className="w-full">
+              <div className="flex items-center justify-between">
+                    <h2 className="text-2xl font-bold text-[#895cd6]">আমার কোর্সসমূহ</h2>
+                    <TabsList className="bg-white dark:bg-card border border-[#895cd6]/20">
+                    <TabsTrigger
+                      value="all"
+                      className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#895cd6] data-[state=active]:to-[#7b4dc4] data-[state=active]:text-white"
+                    >
+                      সব কোর্স
+                    </TabsTrigger>
+                    <TabsTrigger
+                      value="ongoing"
+                      className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#f5812e] data-[state=active]:to-[#e36e1f] data-[state=active]:text-white"
+                    >
+                      আনফিনিশড
+                    </TabsTrigger>
+                  </TabsList>
+                  </div>
 
-              <TabsContent value="all">
-              <div className="grid md:grid-cols-2 gap-4">
-              {enrollments.map((enrollment) => {
-                const course = enrollment.courses;
-                const progress = courseProgress[course.id];
-                const hasStarted = progress?.hasStarted || false;
-                const progressPercent = progress?.percent || 0;
-                const courseModulesArray = courseModules[course.id] || [];
+                <TabsContent value="all">
+                <div className="grid md:grid-cols-2 gap-4">
+                {enrollments.map((enrollment) => {
+                  const course = enrollment.courses;
+                  const progress = courseProgress[course.id];
+                  const hasStarted = progress?.hasStarted || false;
+                  const progressPercent = progress?.percent || 0;
+                  const courseModulesArray = courseModules[course.id] || [];
 
-                return (
-                  <Card key={course.id} className="overflow-hidden hover:shadow-lg transition-shadow">
-                    <div className="relative">
-                      <img
-                        src={course.thumbnail_url || course.image_url || "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=400&q=80"}
-                        alt={course.title}
-                        className="w-full h-48 object-cover"
-                      />
-                      <div className="absolute top-3 left-3">
-                        {!hasStarted ? (
-                          <Badge className="bg-gradient-to-r from-[#895cd6] to-[#7b4dc4] hover:opacity-90 text-white border-0">
-                            নতুন কোর্স
-                          </Badge>
-                        ) : progressPercent === 100 ? (
-                          <Badge className="bg-gradient-to-r from-green-500 to-green-600 hover:opacity-90 text-white border-0">
-                            <CheckCircle className="w-3 h-3 mr-1" />
-                            সম্পন্ন
-                          </Badge>
-                        ) : (
-                          <Badge className="bg-gradient-to-r from-[#f5812e] to-[#e36e1f] hover:opacity-90 text-white border-0">
-                            {progressPercent}% আনফিনিশড
-                          </Badge>
+                  return (
+                    <Card key={course.id} className="overflow-hidden hover:shadow-lg transition-shadow">
+                      <div className="relative">
+                        <img
+                          src={course.thumbnail_url || course.image_url || "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=400&q=80"}
+                          alt={course.title}
+                          className="w-full h-48 object-cover"
+                        />
+                        <div className="absolute top-3 left-3">
+                          {!hasStarted ? (
+                            <Badge className="bg-gradient-to-r from-[#895cd6] to-[#7b4dc4] hover:opacity-90 text-white border-0">
+                              নতুন কোর্স
+                            </Badge>
+                          ) : progressPercent === 100 ? (
+                            <Badge className="bg-gradient-to-r from-green-500 to-green-600 hover:opacity-90 text-white border-0">
+                              <CheckCircle className="w-3 h-3 mr-1" />
+                              সম্পন্ন
+                            </Badge>
+                          ) : (
+                            <Badge className="bg-gradient-to-r from-[#f5812e] to-[#e36e1f] hover:opacity-90 text-white border-0">
+                              {progressPercent}% আনফিনিশড
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="p-4 space-y-3">
+                        <h3 className="font-bold text-lg">{course.title}</h3>
+
+                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                          <span className="flex items-center gap-1">
+                            <BookOpen className="w-4 h-4" />
+                            {courseModulesArray.length} টি মডিউল
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <Clock className="w-4 h-4" />
+                            {Math.round(courseModulesArray.reduce((sum, m) => sum + (m.duration_minutes || 0), 0) / 60)} ঘন্টা
+                          </span>
+                        </div>
+
+                        {hasStarted && progressPercent > 0 && (
+                          <div className="space-y-1">
+                            <div className="flex justify-between text-xs">
+                              <span className="text-muted-foreground">{progress?.completed || 0}/{progress?.total || 0} মডিউল</span>
+                              <span className={progressPercent === 100 ? "text-green-600 font-medium" : "text-[#f5812e] font-medium"}>
+                                {progressPercent === 100 ? "সম্পন্ন" : "আনফিনিশড"}
+                              </span>
+                            </div>
+                            <Progress value={progressPercent} className="h-2" />
+                          </div>
                         )}
-                      </div>
-                    </div>
 
-                    <div className="p-4 space-y-3">
-                      <h3 className="font-bold text-lg">{course.title}</h3>
-
-                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                        <span className="flex items-center gap-1">
-                          <BookOpen className="w-4 h-4" />
-                          {courseModulesArray.length} টি মডিউল
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Clock className="w-4 h-4" />
-                          {Math.round(courseModulesArray.reduce((sum, m) => sum + (m.duration_minutes || 0), 0) / 60)} ঘন্টা
-                        </span>
-                      </div>
-
-                      {hasStarted && progressPercent > 0 && (
-                        <div className="space-y-1">
-                          <div className="flex justify-between text-xs">
-                            <span className="text-muted-foreground">{progress?.completed || 0}/{progress?.total || 0} মডিউল</span>
-                            <span className={progressPercent === 100 ? "text-green-600 font-medium" : "text-[#f5812e] font-medium"}>
-                              {progressPercent === 100 ? "সম্পন্ন" : "আনফিনিশড"}
-                            </span>
-                          </div>
-                          <Progress value={progressPercent} className="h-2" />
+                        <div className="flex gap-2 pt-2">
+                          <Button
+                            className="flex-1 bg-gradient-to-r from-[#895cd6] to-[#7b4dc4] hover:opacity-90 text-white"
+                            onClick={() => handleViewCourseModules(course.id)}
+                          >
+                            STUDY PLAN
+                          </Button>
+                          <Button variant="outline" className="flex-1 border-[#f5812e] text-[#f5812e] hover:bg-[#f5812e] hover:text-white">
+                            রিসোর্স
+                            <Star className="w-4 h-4 ml-1" />
+                          </Button>
                         </div>
-                      )}
-
-                      <div className="flex gap-2 pt-2">
-                        <Button
-                          className="flex-1 bg-gradient-to-r from-[#895cd6] to-[#7b4dc4] hover:opacity-90 text-white"
-                          onClick={() => handleViewCourseModules(course.id)}
-                        >
-                          STUDY PLAN
-                        </Button>
-                        <Button variant="outline" className="flex-1 border-[#f5812e] text-[#f5812e] hover:bg-[#f5812e] hover:text-white">
-                          রিসোর্স
-                          <Star className="w-4 h-4 ml-1" />
-                        </Button>
                       </div>
-                    </div>
-                  </Card>
-                );
-              })}
-                </div>
-              </TabsContent>
+                    </Card>
+                  );
+                })}
+                  </div>
+                </TabsContent>
 
-              <TabsContent value="ongoing">
-              <div className="grid md:grid-cols-2 gap-4">
-              {enrollments.filter((e) => courseProgress[e.courses.id]?.percent < 100).map((enrollment) => {
-                const course = enrollment.courses;
-                const progress = courseProgress[course.id];
-                const progressPercent = progress?.percent || 0;
-                const courseModulesArray = courseModules[course.id] || [];
+                <TabsContent value="ongoing">
+                <div className="grid md:grid-cols-2 gap-4">
+                {enrollments.filter((e) => courseProgress[e.courses.id]?.percent < 100).map((enrollment) => {
+                  const course = enrollment.courses;
+                  const progress = courseProgress[course.id];
+                  const progressPercent = progress?.percent || 0;
+                  const courseModulesArray = courseModules[course.id] || [];
 
-                return (
-                  <Card key={course.id} className="overflow-hidden hover:shadow-lg transition-shadow">
-                    <div className="relative">
-                      <img
-                        src={course.thumbnail_url || course.image_url || "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=400&q=80"}
-                        alt={course.title}
-                        className="w-full h-48 object-cover"
-                      />
-                      <div className="absolute top-3 left-3">
-                        {
-                          <Badge className="bg-gradient-to-r from-[#f5812e] to-[#e36e1f] hover:opacity-90 text-white border-0">
-                            {progressPercent}% আনফিনিশড
-                          </Badge>
-                        }
-                      </div>
-                    </div>
-
-                    <div className="p-4 space-y-3">
-                      <h3 className="font-bold text-lg">{course.title}</h3>
-
-                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                        <span className="flex items-center gap-1">
-                          <BookOpen className="w-4 h-4" />
-                          {courseModulesArray.length} টি মডিউল
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Clock className="w-4 h-4" />
-                          {Math.round(courseModulesArray.reduce((sum, m) => sum + (m.duration_minutes || 0), 0) / 60)} ঘন্টা
-                        </span>
-                      </div>
-
-                      {progressPercent > 0 && (
-                        <div className="space-y-1">
-                          <div className="flex justify-between text-xs">
-                            <span className="text-muted-foreground">{progress?.completed || 0}/{progress?.total || 0} মডিউল</span>
-                            <span className="text-[#f5812e] font-medium">
-                              আনফিনিশড
-                            </span>
-                          </div>
-                          <Progress value={progressPercent} className="h-2" />
+                  return (
+                    <Card key={course.id} className="overflow-hidden hover:shadow-lg transition-shadow">
+                      <div className="relative">
+                        <img
+                          src={course.thumbnail_url || course.image_url || "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=400&q=80"}
+                          alt={course.title}
+                          className="w-full h-48 object-cover"
+                        />
+                        <div className="absolute top-3 left-3">
+                          {
+                            <Badge className="bg-gradient-to-r from-[#f5812e] to-[#e36e1f] hover:opacity-90 text-white border-0">
+                              {progressPercent}% আনফিনিশড
+                            </Badge>
+                          }
                         </div>
-                      )}
-
-                      <div className="flex gap-2 pt-2">
-                        <Button
-                          className="flex-1 bg-gradient-to-r from-[#895cd6] to-[#7b4dc4] hover:opacity-90 text-white"
-                          onClick={() => handleViewCourseModules(course.id)}
-                        >
-                          STUDY PLAN
-                        </Button>
-                        <Button variant="outline" className="flex-1 border-[#f5812e] text-[#f5812e] hover:bg-[#f5812e] hover:text-white">
-                          রিসোর্স
-                          <Star className="w-4 h-4 ml-1" />
-                        </Button>
                       </div>
-                    </div>
-                  </Card>
-                );
-              })}
-                </div>
-              </TabsContent>
-            </Tabs>
+
+                      <div className="p-4 space-y-3">
+                        <h3 className="font-bold text-lg">{course.title}</h3>
+
+                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                          <span className="flex items-center gap-1">
+                            <BookOpen className="w-4 h-4" />
+                            {courseModulesArray.length} টি মডিউল
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <Clock className="w-4 h-4" />
+                            {Math.round(courseModulesArray.reduce((sum, m) => sum + (m.duration_minutes || 0), 0) / 60)} ঘন্টা
+                          </span>
+                        </div>
+
+                        {progressPercent > 0 && (
+                          <div className="space-y-1">
+                            <div className="flex justify-between text-xs">
+                              <span className="text-muted-foreground">{progress?.completed || 0}/{progress?.total || 0} মডিউল</span>
+                              <span className="text-[#f5812e] font-medium">
+                                আনফিনিশড
+                              </span>
+                            </div>
+                            <Progress value={progressPercent} className="h-2" />
+                          </div>
+                        )}
+
+                        <div className="flex gap-2 pt-2">
+                          <Button
+                            className="flex-1 bg-gradient-to-r from-[#895cd6] to-[#7b4dc4] hover:opacity-90 text-white"
+                            onClick={() => handleViewCourseModules(course.id)}
+                          >
+                            STUDY PLAN
+                          </Button>
+                          <Button variant="outline" className="flex-1 border-[#f5812e] text-[#f5812e] hover:bg-[#f5812e] hover:text-white">
+                            রিসোর্স
+                            <Star className="w-4 h-4 ml-1" />
+                          </Button>
+                        </div>
+                      </div>
+                    </Card>
+                  );
+                })}
+                  </div>
+                </TabsContent>
+              </Tabs>
+            )}
 
             {viewMode === 'modules' && selectedCourse && (
               <>
