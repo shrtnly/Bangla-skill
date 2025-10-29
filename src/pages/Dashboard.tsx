@@ -5,21 +5,17 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import {
   BookOpen,
-  Trophy,
   Star,
-  Award,
-  Target,
   Clock,
   CheckCircle,
   LogOut,
   User,
   Settings,
   Info,
-  Crown,
-  Phone,
-  MessageCircle,
   Moon,
   Sun,
+  Play,
+  Languages,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -35,6 +31,54 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { CourseDetailsModal } from "@/components/CourseDetailsModal";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
+const translations = {
+  bn: {
+    myCourses: "আমার কোর্স",
+    myProfile: "আমার প্রোফাইল",
+    coursesTitle: "আমার কোর্সসমূহ",
+    allCourses: "সব কোর্সসমূহ",
+    unfinished: "আনফিনিশড",
+    newCourse: "নতুন কোর্স",
+    completed: "সম্পন্ন",
+    modules: "মডিউল",
+    hours: "ঘন্টা",
+    start: "শুরু করুন",
+    continue: "চালিয়ে যান",
+    resources: "রিসোর্স",
+    noCoursesEnrolled: "আপনি এখনো কোনো কোর্সে ভর্তি হননি",
+    browseCourses: "কোর্স দেখুন",
+    noUnfinished: "কোনো আনফিনিশড কোর্স নেই",
+    profile: "প্রোফাইল",
+    settings: "সেটিংস",
+    logout: "লগ আউট",
+    logoutSuccess: "লগ আউট সফল হয়েছে",
+    logoutError: "লগ আউট করতে সমস্যা হয়েছে",
+  },
+  en: {
+    myCourses: "My Courses",
+    myProfile: "My Profile",
+    coursesTitle: "My Courses",
+    allCourses: "All Courses",
+    unfinished: "Unfinished",
+    newCourse: "New Course",
+    completed: "Completed",
+    modules: "Modules",
+    hours: "Hours",
+    start: "Start",
+    continue: "Continue",
+    resources: "Resources",
+    noCoursesEnrolled: "You haven't enrolled in any courses yet",
+    browseCourses: "Browse Courses",
+    noUnfinished: "No unfinished courses",
+    profile: "Profile",
+    settings: "Settings",
+    logout: "Logout",
+    logoutSuccess: "Logout successful",
+    logoutError: "Failed to logout",
+  },
+};
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -46,7 +90,9 @@ const Dashboard = () => {
   const [courseModules, setCourseModules] = useState<Record<string, any[]>>({});
   const [selectedCourse, setSelectedCourse] = useState<any>(null);
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
-  const [realStats, setRealStats] = useState<any>(null);
+  const [language, setLanguage] = useState<"bn" | "en">("bn");
+
+  const t = translations[language];
 
   useEffect(() => {
     const fetchData = async () => {
@@ -98,12 +144,13 @@ const Dashboard = () => {
               totalModules > 0
                 ? Math.round((completedModules / totalModules) * 100)
                 : 0;
+            const hasStarted = modProgress.length > 0;
 
             progressData[course.id] = {
               completed: completedModules,
               total: totalModules,
               percent: progressPercent,
-              hasStarted: modProgress.length > 0,
+              hasStarted,
             };
           }
         }
@@ -111,27 +158,13 @@ const Dashboard = () => {
 
       setCourseProgress(progressData);
       setCourseModules(modulesData);
-
-      const { data: allModProgress } = await supabase
-        .from("module_progress")
-        .select("*")
-        .eq("user_id", user.id);
-
-      const completedModulesCount =
-        allModProgress?.filter((p) => p.quiz_passed).length || 0;
-      const totalModulesCount = Object.values(modulesData).flat().length || 0;
-
-      setRealStats({
-        completedModules: completedModulesCount,
-        totalModules: totalModulesCount,
-      });
     };
 
     fetchData();
   }, [user]);
 
   const userStats = {
-    name: profile?.full_name || user?.user_metadata?.full_name || "ব্যবহারকারী",
+    name: profile?.full_name || user?.user_metadata?.full_name || (language === "bn" ? "ব্যবহারকারী" : "User"),
   };
 
   const handleShowDetails = async (course: any) => {
@@ -142,18 +175,22 @@ const Dashboard = () => {
   const handleSignOut = async () => {
     try {
       await signOut();
-      toast.success("লগ আউট সফল হয়েছে");
+      toast.success(t.logoutSuccess);
     } catch (error) {
-      toast.error("লগ আউট করতে সমস্যা হয়েছে");
+      toast.error(t.logoutError);
     }
   };
 
+  const toggleLanguage = () => {
+    setLanguage((prev) => (prev === "bn" ? "en" : "bn"));
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-background transition-colors duration-300">
+    <div className="min-h-screen bg-gray-50 dark:bg-background">
       {/* Header */}
       <header className="border-b bg-white dark:bg-card sticky top-0 z-50 shadow-sm">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
-          {/* Brand */}
+          {/* Logo */}
           <div
             className="flex items-center gap-2 cursor-pointer"
             onClick={() => navigate("/")}
@@ -166,6 +203,17 @@ const Dashboard = () => {
 
           {/* Right controls */}
           <div className="flex items-center gap-3">
+            {/* Language toggle */}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={toggleLanguage}
+              className="gap-2 text-[#895cd6] hover:text-[#7b4dc4] hover:bg-[#895cd6]/10"
+            >
+              <Languages className="h-4 w-4" />
+              <span className="font-medium">{language === "bn" ? "EN" : "বাং"}</span>
+            </Button>
+
             {/* Theme toggle */}
             <Button
               variant="ghost"
@@ -191,16 +239,16 @@ const Dashboard = () => {
               <DropdownMenuContent align="end" className="w-48">
                 <DropdownMenuItem onClick={() => navigate("/profile")}>
                   <User className="w-4 h-4 mr-2" />
-                  প্রোফাইল
+                  {t.profile}
                 </DropdownMenuItem>
                 <DropdownMenuItem>
                   <Settings className="w-4 h-4 mr-2" />
-                  সেটিংস
+                  {t.settings}
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleSignOut}>
                   <LogOut className="w-4 h-4 mr-2" />
-                  লগ আউট
+                  {t.logout}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -219,7 +267,7 @@ const Dashboard = () => {
                 className="w-full justify-start gap-3 text-base bg-[#895cd6] hover:bg-[#7b4dc4] text-white"
               >
                 <BookOpen className="w-5 h-5" />
-                আমার কোর্স
+                {t.myCourses}
               </Button>
               <Button
                 variant="ghost"
@@ -227,158 +275,260 @@ const Dashboard = () => {
                 onClick={() => navigate("/profile")}
               >
                 <User className="w-5 h-5" />
-                আমার প্রোফাইল
+                {t.myProfile}
               </Button>
             </Card>
           </div>
 
           {/* Courses Section */}
-          <div className="lg:col-span-2 space-y-6">
-            <h2 className="text-2xl font-bold text-[#895cd6]">
-              আমার কোর্সসমূহ
-            </h2>
-            <div className="space-y-4">
-              {courses.filter((c) => {
-                const progress = courseProgress[c.id];
-                return progress && progress.percent < 100;
-              }).length === 0 ? (
-                <Card className="p-8 text-center space-y-4">
-                  <p className="text-muted-foreground">
-                    কোনো আনফিনিশড কোর্স নেই 🎉
-                  </p>
-                </Card>
-              ) : (
-                courses
-                  .filter((c) => {
-                    const progress = courseProgress[c.id];
-                    return progress && progress.percent < 100;
-                  })
-                  .map((course) => {
-                    const progress = courseProgress[course.id];
-                    const modules = courseModules[course.id] || [];
-                    const totalDuration = modules.reduce(
-                      (sum, m) => sum + (m.duration_minutes || 0),
-                      0
-                    );
+          <div className="lg:col-span-3 space-y-6">
+            <Tabs defaultValue="all" className="w-full">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-2xl font-bold text-[#895cd6]">
+                  {t.coursesTitle}
+                </h2>
+                <TabsList className="bg-white dark:bg-card border border-[#895cd6]/20">
+                  <TabsTrigger
+                    value="all"
+                    className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#895cd6] data-[state=active]:to-[#7b4dc4] data-[state=active]:text-white"
+                  >
+                    {t.allCourses}
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="ongoing"
+                    className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#f5812e] data-[state=active]:to-[#e36e1f] data-[state=active]:text-white"
+                  >
+                    {t.unfinished}
+                  </TabsTrigger>
+                </TabsList>
+              </div>
 
-                    return (
-                      <Card
-                        key={course.id}
-                        className="overflow-hidden hover:shadow-md transition-shadow border-[#895cd6]/30"
-                      >
-                        <div className="p-4 space-y-3">
-                          <div className="flex justify-between items-start">
-                            <div>
-                              <Badge
-                                className="bg-[#f5812e] text-white border-0 mb-2"
-                              >
-                                {progress.percent}% আনফিনিশড
+              <TabsContent value="all" className="mt-0">
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {courses.length === 0 ? (
+                    <Card className="p-8 text-center col-span-full">
+                      <p className="text-muted-foreground">
+                        {t.noCoursesEnrolled}
+                      </p>
+                      <Button onClick={() => navigate("/")} className="mt-4">
+                        {t.browseCourses}
+                      </Button>
+                    </Card>
+                  ) : (
+                    courses.map((course) => {
+                      const progress = courseProgress[course.id];
+                      const hasStarted = progress?.hasStarted || false;
+                      const progressPercent = progress?.percent || 0;
+                      const modules = courseModules[course.id] || [];
+                      const totalDuration = modules.reduce(
+                        (sum, m) => sum + (m.duration_minutes || 0),
+                        0
+                      );
+
+                      return (
+                        <Card
+                          key={course.id}
+                          className="overflow-hidden hover:shadow-lg transition-shadow"
+                        >
+                          <div className="p-4 space-y-3">
+                            <div className="flex gap-4">
+                              <Badge variant="outline" className="self-start px-3 py-1">
+                                {t.modules} {modules.length}
                               </Badge>
-                              <h3 className="font-bold text-base">
-                                {course.title}
-                              </h3>
+                              <div className="flex-1">
+                                {!hasStarted ? (
+                                  <Badge className="bg-gradient-to-r from-[#895cd6] to-[#7b4dc4] hover:opacity-90 text-white border-0 mb-2">
+                                    {t.newCourse}
+                                  </Badge>
+                                ) : progressPercent === 100 ? (
+                                  <Badge className="bg-gradient-to-r from-green-500 to-green-600 hover:opacity-90 text-white border-0 mb-2">
+                                    <CheckCircle className="w-3 h-3 mr-1" />
+                                    {t.completed}
+                                  </Badge>
+                                ) : (
+                                  <Badge className="bg-gradient-to-r from-[#f5812e] to-[#e36e1f] hover:opacity-90 text-white border-0 mb-2">
+                                    {progressPercent}% {t.unfinished}
+                                  </Badge>
+                                )}
+                              </div>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleShowDetails(course)}
+                              >
+                                <Info className="w-4 h-4" />
+                              </Button>
                             </div>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => handleShowDetails(course)}
-                            >
-                              <Info className="w-4 h-4 text-[#895cd6]" />
-                            </Button>
-                          </div>
 
-                          <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                            <span className="flex items-center gap-1">
-                              <BookOpen className="w-4 h-4 text-[#895cd6]" />
-                              {modules.length} মডিউল
-                            </span>
-                            {totalDuration > 0 && (
+                            <h3 className="font-bold text-base">{course.title}</h3>
+
+                            <div className="flex items-center gap-4 text-sm text-muted-foreground">
                               <span className="flex items-center gap-1">
-                                <Clock className="w-4 h-4 text-[#f5812e]" />
-                                {Math.round(totalDuration / 60)} ঘন্টা
+                                <BookOpen className="w-4 h-4" />
+                                {modules.length} {language === "bn" ? "টি মডিউল" : "Modules"}
                               </span>
+                              {totalDuration > 0 && (
+                                <span className="flex items-center gap-1">
+                                  <Clock className="w-4 h-4" />
+                                  {Math.round(totalDuration / 60)} {t.hours}
+                                </span>
+                              )}
+                            </div>
+
+                            <div className="flex gap-2 pt-2">
+                              <Button
+                                className="flex-1 bg-gradient-to-r from-[#895cd6] to-[#7b4dc4] hover:opacity-90 text-white"
+                                onClick={() => navigate(`/learning?courseId=${course.id}`)}
+                              >
+                                <Play className="w-4 h-4 mr-2" />
+                                {t.start}
+                              </Button>
+                              <Button
+                                variant="outline"
+                                className="flex-1 border-[#f5812e] text-[#f5812e] hover:bg-[#f5812e] hover:text-white"
+                              >
+                                {t.resources}
+                                <Star className="w-4 h-4 ml-1" />
+                              </Button>
+                            </div>
+
+                            {hasStarted && progressPercent > 0 && (
+                              <div className="space-y-1">
+                                <div className="flex justify-between text-xs text-muted-foreground">
+                                  <span>
+                                    {progress.completed}/{progress.total} {language === "bn" ? "মডিউল" : "modules"}
+                                  </span>
+                                  <span
+                                    className={
+                                      progressPercent === 100
+                                        ? "text-green-600 font-medium"
+                                        : "text-[#f5812e] font-medium"
+                                    }
+                                  >
+                                    {progressPercent === 100 ? t.completed : t.unfinished}
+                                  </span>
+                                </div>
+                                <Progress value={progressPercent} className="h-2" />
+                              </div>
                             )}
                           </div>
-
-                          <Progress
-                            value={progress.percent}
-                            className="h-2 bg-gray-200 dark:bg-gray-700"
-                          />
-
-                          <div className="flex gap-2 pt-2">
-                            <Button
-                              className="flex-1 bg-[#895cd6] hover:bg-[#7b4dc4] text-white"
-                              onClick={() =>
-                                navigate(`/learning?courseId=${course.id}`)
-                              }
-                            >
-                              STUDY PLAN
-                            </Button>
-                            <Button
-                              variant="outline"
-                              className="flex-1 border-[#f5812e] text-[#f5812e]"
-                            >
-                              রিসোর্স
-                              <Star className="w-4 h-4 ml-1" />
-                            </Button>
-                          </div>
-                        </div>
-                      </Card>
-                    );
-                  })
-              )}
-            </div>
-          </div>
-
-          {/* Right Sidebar */}
-          <div className="space-y-6">
-            <Card className="p-6 bg-gradient-to-br from-[#895cd6] to-[#f5812e] text-white">
-              <div className="flex items-start gap-3">
-                <Crown className="w-8 h-8 flex-shrink-0" />
-                <div>
-                  <h3 className="font-bold text-lg mb-2">
-                    প্রোফেশনাল কোর্সে যোগ দিন!
-                  </h3>
-                  <Button className="w-full bg-white text-[#895cd6] hover:bg-gray-100">
-                    JOIN NOW →
-                  </Button>
+                        </Card>
+                      );
+                    })
+                  )}
                 </div>
-              </div>
-            </Card>
+              </TabsContent>
 
-            <Card className="p-6 space-y-4">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
-                  <Award className="w-6 h-6 text-[#f5812e]" />
+              <TabsContent value="ongoing">
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {courses.filter((c) => {
+                    const progress = courseProgress[c.id];
+                    return progress && progress.hasStarted && progress.percent < 100;
+                  }).length === 0 ? (
+                    <Card className="p-8 text-center col-span-full">
+                      <p className="text-muted-foreground">{t.noUnfinished}</p>
+                    </Card>
+                  ) : (
+                    courses
+                      .filter((c) => {
+                        const progress = courseProgress[c.id];
+                        return progress && progress.hasStarted && progress.percent < 100;
+                      })
+                      .map((course) => {
+                        const progress = courseProgress[course.id];
+                        const progressPercent = progress?.percent || 0;
+                        const modules = courseModules[course.id] || [];
+                        const totalDuration = modules.reduce(
+                          (sum, m) => sum + (m.duration_minutes || 0),
+                          0
+                        );
+
+                        return (
+                          <Card
+                            key={course.id}
+                            className="overflow-hidden hover:shadow-lg transition-shadow"
+                          >
+                            <div className="p-4 space-y-3">
+                              <div className="flex gap-4">
+                                <Badge variant="outline" className="self-start px-3 py-1">
+                                  {t.modules} {modules.length}
+                                </Badge>
+                                <div className="flex-1">
+                                  <Badge className="bg-gradient-to-r from-[#f5812e] to-[#e36e1f] hover:opacity-90 text-white border-0 mb-2">
+                                    {progressPercent}% {t.unfinished}
+                                  </Badge>
+                                </div>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => handleShowDetails(course)}
+                                >
+                                  <Info className="w-4 h-4" />
+                                </Button>
+                              </div>
+
+                              <h3 className="font-bold text-base">{course.title}</h3>
+
+                              <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                                <span className="flex items-center gap-1">
+                                  <BookOpen className="w-4 h-4" />
+                                  {modules.length} {language === "bn" ? "টি মডিউল" : "Modules"}
+                                </span>
+                                {totalDuration > 0 && (
+                                  <span className="flex items-center gap-1">
+                                    <Clock className="w-4 h-4" />
+                                    {Math.round(totalDuration / 60)} {t.hours}
+                                  </span>
+                                )}
+                              </div>
+
+                              <div className="flex gap-2 pt-2">
+                                <Button
+                                  className="flex-1 bg-gradient-to-r from-[#895cd6] to-[#7b4dc4] hover:opacity-90 text-white"
+                                  onClick={() => navigate(`/learning?courseId=${course.id}`)}
+                                >
+                                  <Play className="w-4 h-4 mr-2" />
+                                  {t.continue}
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  className="flex-1 border-[#f5812e] text-[#f5812e] hover:bg-[#f5812e] hover:text-white"
+                                >
+                                  {t.resources}
+                                  <Star className="w-4 h-4 ml-1" />
+                                </Button>
+                              </div>
+
+                              <div className="space-y-1">
+                                <div className="flex justify-between text-xs text-muted-foreground">
+                                  <span>
+                                    {progress.completed}/{progress.total} {language === "bn" ? "মডিউল" : "modules"}
+                                  </span>
+                                  <span className="text-[#f5812e] font-medium">
+                                    {t.unfinished}
+                                  </span>
+                                </div>
+                                <Progress value={progressPercent} className="h-2" />
+                              </div>
+                            </div>
+                          </Card>
+                        );
+                      })
+                  )}
                 </div>
-                <h3 className="font-bold">Job Placement Team</h3>
-              </div>
-              <div className="space-y-2">
-                <Button variant="outline" className="w-full justify-start gap-2">
-                  <Phone className="w-4 h-4" />
-                  CALL
-                </Button>
-                <Button
-                  variant="outline"
-                  className="w-full justify-start gap-2 text-green-600 border-green-600"
-                >
-                  <MessageCircle className="w-4 h-4" />
-                  WHATSAPP
-                </Button>
-              </div>
-            </Card>
+              </TabsContent>
+            </Tabs>
           </div>
         </div>
       </div>
 
+      {/* Course Details Modal */}
       <CourseDetailsModal
         course={selectedCourse}
         open={detailsModalOpen}
         onOpenChange={setDetailsModalOpen}
         modules={selectedCourse ? courseModules[selectedCourse.id] : []}
-        onStartCourse={() =>
-          navigate(`/learning?courseId=${selectedCourse?.id}`)
-        }
+        onStartCourse={() => navigate(`/learning?courseId=${selectedCourse?.id}`)}
       />
     </div>
   );
