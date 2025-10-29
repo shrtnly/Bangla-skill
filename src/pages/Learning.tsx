@@ -27,7 +27,6 @@ import { toast } from "sonner";
 const Learning = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [searchParams] = useState(() => new URLSearchParams(window.location.search));
 
   const [loading, setLoading] = useState(true);
   const [enrollments, setEnrollments] = useState<any[]>([]);
@@ -39,7 +38,6 @@ const Learning = () => {
   const [chapterProgress, setChapterProgress] = useState<any[]>([]);
   const [courseProgress, setCourseProgress] = useState<Record<string, any>>({});
   const [courseModules, setCourseModules] = useState<Record<string, any[]>>({});
-  const [viewMode, setViewMode] = useState<'list' | 'modules'>('list');
 
   useEffect(() => {
     if (user) {
@@ -58,14 +56,6 @@ const Learning = () => {
       fetchChapters(selectedModuleId);
     }
   }, [selectedModuleId]);
-
-  useEffect(() => {
-    const courseIdFromUrl = searchParams.get('courseId');
-    if (courseIdFromUrl) {
-      setSelectedCourseId(courseIdFromUrl);
-      setViewMode('modules');
-    }
-  }, [searchParams]);
 
   const fetchEnrollments = async () => {
     try {
@@ -253,12 +243,6 @@ const Learning = () => {
 
   const selectedCourse = enrollments.find(e => e.course_id === selectedCourseId)?.courses;
 
-  const handleViewCourseModules = (courseId: string) => {
-    setSelectedCourseId(courseId);
-    setViewMode('modules');
-    navigate(`/learning?courseId=${courseId}`);
-  };
-
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -377,22 +361,20 @@ const Learning = () => {
             </Card>
 
             {/* Course Tabs */}
-            {viewMode === 'list' && (
-              <>
-                <div className="flex items-center justify-between">
-                  <h2 className="text-2xl font-bold">আমার কোর্সসমূহ</h2>
-                  <div className="flex gap-2">
-                    <Button variant="default" className="bg-gray-900 hover:bg-gray-800 text-white">
-                      সব কোর্সসমূহ
-                    </Button>
-                    <Button variant="outline">
-                      অনুবাহী কোর্সসমূহ
-                    </Button>
-                  </div>
-                </div>
+            <div className="flex items-center justify-between">
+              <h2 className="text-2xl font-bold">আমার কোর্সসমূহ</h2>
+              <div className="flex gap-2">
+                <Button variant="default" className="bg-gray-900 hover:bg-gray-800 text-white">
+                  সব কোর্সসমূহ
+                </Button>
+                <Button variant="outline">
+                  অনুবাহী কোর্সসমূহ
+                </Button>
+              </div>
+            </div>
 
-                {/* Course Cards Grid */}
-                <div className="grid md:grid-cols-2 gap-4">
+            {/* Course Cards Grid */}
+            <div className="grid md:grid-cols-2 gap-4">
               {enrollments.map((enrollment) => {
                 const course = enrollment.courses;
                 const progress = courseProgress[course.id];
@@ -459,7 +441,7 @@ const Learning = () => {
                       <div className="flex gap-2 pt-2">
                         <Button
                           className="flex-1 bg-gray-900 hover:bg-gray-800 text-white"
-                          onClick={() => handleViewCourseModules(course.id)}
+                          onClick={() => navigate(`/learning?courseId=${course.id}`)}
                         >
                           STUDY PLAN
                         </Button>
@@ -472,163 +454,7 @@ const Learning = () => {
                   </Card>
                 );
               })}
-                </div>
-              </>
-            )}
-
-            {/* Modules View */}
-            {viewMode === 'modules' && selectedCourse && (
-              <>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Button
-                      variant="ghost"
-                      onClick={() => {
-                        setViewMode('list');
-                        navigate('/learning');
-                      }}
-                      className="mb-2"
-                    >
-                      <ArrowLeft className="w-4 h-4 mr-2" />
-                      কোর্স তালিকায় ফিরে যান
-                    </Button>
-                    <h2 className="text-2xl font-bold">{selectedCourse.title}</h2>
-                  </div>
-                  <Badge className="bg-primary text-primary-foreground">
-                    {modules.length} মডিউল
-                  </Badge>
-                </div>
-
-                {/* Modules List */}
-                <div className="space-y-3">
-                  {modules.length === 0 ? (
-                    <Card className="p-12 text-center">
-                      <BookOpen className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-                      <p className="text-muted-foreground">এই কোর্সে এখনো কোনো মডিউল নেই</p>
-                    </Card>
-                  ) : (
-                    modules.map((module, index) => {
-                      const isUnlocked = isModuleUnlocked(index);
-                      const progress = getProgressPercentage(module);
-                      const moduleProgressData = moduleProgress.find(p => p.module_id === module.id);
-                      const isCompleted = moduleProgressData?.quiz_passed;
-                      const isInProgress = moduleProgressData && !isCompleted;
-                      const moduleChapters = chapters.filter(c => c.module_id === module.id);
-                      const completedChapters = chapterProgress.filter(
-                        cp => moduleChapters.some(mc => mc.id === cp.chapter_id) && cp.completed
-                      ).length;
-
-                      return (
-                        <Card
-                          key={module.id}
-                          className={`p-5 transition-all hover:shadow-md ${
-                            !isUnlocked ? "opacity-60" : "cursor-pointer"
-                          } ${selectedModuleId === module.id ? "ring-2 ring-primary" : ""}`}
-                          onClick={() => isUnlocked && setSelectedModuleId(module.id)}
-                        >
-                          <div className="flex items-center gap-4">
-                            <div className={`w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 ${
-                              isCompleted
-                                ? "bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400"
-                                : isInProgress
-                                ? "bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400"
-                                : isUnlocked
-                                ? "bg-primary/10 text-primary"
-                                : "bg-gray-100 text-gray-400 dark:bg-gray-800"
-                            }`}>
-                              {isCompleted ? (
-                                <CheckCircle className="w-6 h-6" />
-                              ) : !isUnlocked ? (
-                                <Lock className="w-6 h-6" />
-                              ) : (
-                                <span className="font-bold">{index + 1}</span>
-                              )}
-                            </div>
-
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-start justify-between gap-2 mb-2">
-                                <div>
-                                  <h3 className="font-semibold text-base md:text-lg">{module.title}</h3>
-                                  {isCompleted && (
-                                    <Badge variant="outline" className="text-green-600 border-green-600 mt-1">
-                                      <Trophy className="w-3 h-3 mr-1" />
-                                      সম্পন্ন
-                                    </Badge>
-                                  )}
-                                </div>
-                                {isUnlocked && (
-                                  <Button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleStartModule(module, index);
-                                    }}
-                                    size="default"
-                                    className="bg-blue-600 hover:bg-blue-700 text-white"
-                                  >
-                                    {isInProgress ? (
-                                      <>
-                                        <Play className="w-4 h-4 mr-2" />
-                                        চালিয়ে যান
-                                      </>
-                                    ) : isCompleted ? (
-                                      <>
-                                        <Award className="w-4 h-4 mr-2" />
-                                        পুনরায় দেখুন
-                                      </>
-                                    ) : (
-                                      <>
-                                        <Play className="w-4 h-4 mr-2" />
-                                        শুরু করুন
-                                      </>
-                                    )}
-                                    <ChevronRight className="w-4 h-4 ml-1" />
-                                  </Button>
-                                )}
-                              </div>
-
-                              {isUnlocked && moduleChapters.length > 0 && (
-                                <div className="space-y-2">
-                                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                                    <div className="flex items-center gap-1">
-                                      <BookOpen className="w-4 h-4" />
-                                      {moduleChapters.length} অধ্যায়
-                                    </div>
-                                    {completedChapters > 0 && (
-                                      <div className="flex items-center gap-1">
-                                        <CheckCircle className="w-4 h-4" />
-                                        {completedChapters}/{moduleChapters.length} সম্পন্ন
-                                      </div>
-                                    )}
-                                    <div className="flex items-center gap-1">
-                                      <Clock className="w-4 h-4" />
-                                      {module.duration_minutes || 120} মিনিট
-                                    </div>
-                                  </div>
-
-                                  {moduleProgressData && (
-                                    <div className="space-y-1">
-                                      <Progress value={progress} className="h-2" />
-                                      <p className="text-xs text-muted-foreground">{progress}% সম্পন্ন</p>
-                                    </div>
-                                  )}
-                                </div>
-                              )}
-
-                              {!isUnlocked && (
-                                <p className="text-sm text-muted-foreground mt-2">
-                                  <Lock className="w-3 h-3 inline mr-1" />
-                                  আগের মডিউল সম্পন্ন করুন
-                                </p>
-                              )}
-                            </div>
-                          </div>
-                        </Card>
-                      );
-                    })
-                  )}
-                </div>
-              </>
-            )}
+            </div>
           </div>
         </div>
       </div>
