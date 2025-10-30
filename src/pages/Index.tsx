@@ -11,13 +11,12 @@ import {
   Star,
   CheckCircle,
   Zap,
-  Target,
   Trophy,
   ArrowRight,
   Loader2,
-  Info,
   Sun,
-  Moon
+  Moon,
+  UserCircle2 // Changed from UserCircle to UserCircle2 for a slightly different icon, or could use just User
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -28,7 +27,7 @@ const Index = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
-  const { theme, setTheme } = useTheme(); // ✅ Dark/Light Mode
+  const { theme, setTheme } = useTheme();
   const [courses, setCourses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -191,15 +190,26 @@ const Index = () => {
               <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
               <span className="sr-only">Toggle theme</span>
             </Button>
-            <Button onClick={() => navigate("/auth")} className="btn-hero">
-              লগইন করুন
-            </Button>
+            {user ? (
+              <Button
+                variant="ghost" // Use ghost variant to remove background on hover
+                size="icon"
+                onClick={() => navigate("/profile")}
+              >
+                <UserCircle2 className="h-6 w-6" />
+                <span className="sr-only">Profile</span>
+              </Button>
+            ) : (
+              <Button onClick={() => navigate("/auth")} className="btn-hero">
+                লগইন করুন
+              </Button>
+            )}
           </div>
         </div>
       </header>
 
       {/* Hero Section */}
-      <section className="container mx-auto px-4 py-20 lg:py-32 text-center">
+      <section className="container mx-auto px-4 py-10 lg:py-32 text-center">
         <Badge className="bg-accent/10 text-accent border-accent/20 hover:bg-accent/20">
           বাংলায় সেরা শিক্ষা প্ল্যাটফর্ম
         </Badge>

@@ -219,15 +219,16 @@ const Dashboard = () => {
               variant="ghost"
               size="icon"
               onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+              className="hover:text-[#7b4dc4] hover:bg-[#895cd6]/10"
             >
-              <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0 text-[#895cd6]" />
-              <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100 text-[#f5812e]" />
+              <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0 text-[#895cd6] hover:scale-110" />
+              <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100 text-[#f5812e] hover:scale-110" />
             </Button>
 
             {/* Profile dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="relative">
+                <Button variant="link" size="icon" className="relative">
                   <Avatar className="h-9 w-9">
                     <AvatarImage src={profile?.avatar_url || ""} />
                     <AvatarFallback className="bg-[#895cd6] text-white">
@@ -271,7 +272,7 @@ const Dashboard = () => {
               </Button>
               <Button
                 variant="ghost"
-                className="w-full justify-start gap-3 text-base hover:text-[#895cd6]"
+                className="w-full justify-start gap-3 text-base hover:text-[#7b4dc4] hover:bg-[#895cd6]/10"
                 onClick={() => navigate("/profile")}
               >
                 <User className="w-5 h-5" />
