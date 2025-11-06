@@ -312,7 +312,15 @@ const Learning = () => {
               </Button>
               <Button
                 variant="ghost"
-                className="w-full justify-start gap-3 text-base text-black dark:text-white hover:text-white hover:bg-[#895cd6]"
+                className="w-full justify-start gap-2 text-white hover:text-[#7b4dc4] hover:bg-[#895cd6]/10"
+                onClick={() => navigate("/Dashboard")}
+              >
+                <User className="w-5 h-5" />
+                ড্যাশবোর্ড
+              </Button>
+              <Button
+                variant="ghost"
+                className="w-full justify-start gap-2 text-white hover:text-[#7b4dc4] hover:bg-[#895cd6]/10"
                 onClick={() => navigate("/profile")}
               >
                 <User className="w-5 h-5" />

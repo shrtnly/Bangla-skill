@@ -37,6 +37,7 @@ const translations = {
   bn: {
     myCourses: "আমার কোর্স",
     myProfile: "আমার প্রোফাইল",
+    learning: "শেখা",
     coursesTitle: "আমার কোর্সসমূহ",
     allCourses: "সব কোর্সসমূহ",
     unfinished: "আনফিনিশড",
@@ -59,6 +60,7 @@ const translations = {
   en: {
     myCourses: "My Courses",
     myProfile: "My Profile",
+    learning: "Learning",
     coursesTitle: "My Courses",
     allCourses: "All Courses",
     unfinished: "Unfinished",
@@ -269,6 +271,14 @@ const Dashboard = () => {
               >
                 <BookOpen className="w-5 h-5" />
                 {t.myCourses}
+              </Button>
+              <Button
+                variant="ghost"
+                className="w-full justify-start gap-2 text-white hover:text-[#7b4dc4] hover:bg-[#895cd6]/10"
+                onClick={() => navigate("/learning")}
+              >
+                <BookOpen className="w-5 h-5" />
+                {t.learning}
               </Button>
               <Button
                 variant="ghost"
