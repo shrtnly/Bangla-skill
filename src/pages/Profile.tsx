@@ -32,6 +32,7 @@ interface ProfileData {
   company: string;
   experience_years: number | null;
   avatar_url: string;
+  total_certificates: number;
 }
 
 const Profile = () => {
@@ -59,6 +60,7 @@ const Profile = () => {
     company: "",
     experience_years: null,
     avatar_url: "",
+    total_certificates: 0,
   });
   
   const [originalProfile, setOriginalProfile] = useState<ProfileData>(profile);
@@ -73,7 +75,7 @@ const Profile = () => {
     try {
       const { data, error } = await supabase
         .from("profiles")
-        .select("*")
+        .select("*, total_certificates:certificates(count)")
         .eq("id", user?.id)
         .single();
 
@@ -95,6 +97,7 @@ const Profile = () => {
           company: data.company || "",
           experience_years: data.experience_years || null,
           avatar_url: data.avatar_url || "",
+          total_certificates: data.total_certificates?.[0]?.count || 0,
         };
         setProfile(profileData);
         setOriginalProfile(profileData);
