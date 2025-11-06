@@ -37,7 +37,7 @@ const translations = {
   bn: {
     myCourses: "আমার কোর্স",
     myProfile: "আমার প্রোফাইল",
-    learning: "শেখা",
+    learning: "শিখুন",
     coursesTitle: "আমার কোর্সসমূহ",
     allCourses: "সব কোর্সসমূহ",
     unfinished: "আনফিনিশড",
