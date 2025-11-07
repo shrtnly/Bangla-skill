@@ -41,6 +41,7 @@ const Resources = () => {
   const [loading, setLoading] = useState(true);
   const [courseTitle, setCourseTitle] = useState("");
   const [modulesWithResources, setModulesWithResources] = useState<Module[]>([]);
+  const [selectedModuleId, setSelectedModuleId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!courseId) {
@@ -72,6 +73,8 @@ const Resources = () => {
         if (modulesError) throw modulesError;
 
         const modulesWithFetchedResources: Module[] = [];
+        let initialSelectedModule: string | null = null;
+
         for (const module of modulesData || []) {
           // Fetch resources for each module
           const { data: resourcesData, error: resourcesError } = await supabase
@@ -81,15 +84,22 @@ const Resources = () => {
 
           if (resourcesError) throw resourcesError;
 
-          if (resourcesData && resourcesData.length > 0) {
-            modulesWithFetchedResources.push({
-              id: module.id,
-              title: module.title,
-              resources: resourcesData,
-            });
+          const moduleWithResources = {
+            id: module.id,
+            title: module.title,
+            resources: resourcesData || [],
+          };
+
+          modulesWithFetchedResources.push(moduleWithResources);
+
+          // Set the first module with resources as the initial selected module
+          if (!initialSelectedModule && (resourcesData && resourcesData.length > 0)) {
+            initialSelectedModule = module.id;
           }
         }
         setModulesWithResources(modulesWithFetchedResources);
+        setSelectedModuleId(initialSelectedModule);
+
       } catch (error: any) {
         console.error("Error fetching course resources:", error.message);
         toast.error("কোর্সের রিসোর্স লোড করতে সমস্যা হয়েছে।");
@@ -112,6 +122,10 @@ const Resources = () => {
     window.open(fileUrl, "_blank"); // Opens in new tab, browser usually handles download/preview
   };
 
+  const handleModuleClick = (moduleId: string) => {
+    setSelectedModuleId(moduleId);
+  };
+
   const handleSignOut = async () => {
     try {
       await signOut();
@@ -127,8 +141,20 @@ const Resources = () => {
     learning: "শিখন",
     myProfile: "আমার প্রোফাইল",
     logout: "লগআউট",
+    back: "ফিরে যান",
+    courseResources: "কোর্স রিসোর্স",
+    resourcesFor: "এর রিসোর্স",
+    noResources: "এই কোর্সের জন্য কোনো রিসোর্স পাওয়া যায়নি।",
+    module: "মডিউল:",
+    download: "ডাউনলোড",
+    noModuleResources: "এই মডিউলের জন্য কোনো রিসোর্স নেই।",
+    selectModule: "একটি মডিউল নির্বাচন করুন।",
   };
   const t = translations; // Using placeholder translations for now
+
+  const selectedModule = modulesWithResources.find(
+    (module) => module.id === selectedModuleId
+  );
 
   if (loading) {
     return (
@@ -193,50 +219,82 @@ const Resources = () => {
       <div className="container mx-auto px-4 py-6">
         <Button variant="ghost" onClick={() => navigate(-1)} className="mb-6">
           <ArrowLeft className="w-4 h-4 mr-2" />
-          ফিরে যান
+          {t.back}
         </Button>
 
         <h1 className="text-3xl font-bold text-[#895cd6] mb-8">
-          {courseTitle ? `${courseTitle} এর রিসোর্স` : "কোর্স রিসোর্স"}
+          {courseTitle ? `${courseTitle} ${t.resourcesFor}` : t.courseResources}
         </h1>
 
         {modulesWithResources.length === 0 ? (
           <Card className="p-8 text-center">
-            <p className="text-muted-foreground">এই কোর্সের জন্য কোনো রিসোর্স পাওয়া যায়নি।</p>
+            <p className="text-muted-foreground">{t.noResources}</p>
           </Card>
         ) : (
-          <div className="space-y-8">
-            {modulesWithResources.map((module) => (
-              <Card key={module.id} className="shadow-md">
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+            {/* Left Column: Modules List */}
+            <div className="lg:col-span-1">
+              <Card className="h-full">
                 <CardHeader>
-                  <CardTitle className="text-xl text-[#895cd6]">মডিউল: {module.title}</CardTitle>
+                  <CardTitle>মডিউলসমূহ</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  {module.resources.map((resource) => (
-                    <div
-                      key={resource.id}
-                      className="flex items-center justify-between p-4 border rounded-md shadow-sm dark:border-gray-700"
+                <CardContent className="space-y-2">
+                  {modulesWithResources.map((module) => (
+                    <Button
+                      key={module.id}
+                      variant="ghost"
+                      className={`w-full justify-start ${selectedModuleId === module.id ? "bg-[#895cd6] text-white hover:bg-[#7b4dc4]" : "hover:bg-gray-100 dark:hover:bg-gray-800"}`}
+                      onClick={() => handleModuleClick(module.id)}
                     >
-                      <div className="flex items-center gap-3">
-                        {getFileIcon(resource.file_type)}
-                        <span className="font-medium">{resource.file_name}</span>
-                      </div>
-                      <div className="flex gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleDownload(resource.file_url, resource.file_name)}
-                          className="text-[#895cd6] border-[#895cd6] hover:bg-[#895cd6] hover:text-white"
-                        >
-                          <Download className="w-4 h-4 mr-2" />
-                          ডাউনলোড
-                        </Button>
-                      </div>
-                    </div>
+                      {module.title}
+                    </Button>
                   ))}
                 </CardContent>
               </Card>
-            ))}
+            </div>
+
+            {/* Right Column: Resources for Selected Module */}
+            <div className="lg:col-span-3">
+              <Card className="h-full">
+                <CardHeader>
+                  <CardTitle>
+                    {selectedModule ? `${t.module} ${selectedModule.title}` : t.selectModule}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {selectedModule ? (
+                    selectedModule.resources.length > 0 ? (
+                      selectedModule.resources.map((resource) => (
+                        <div
+                          key={resource.id}
+                          className="flex items-center justify-between p-4 border rounded-md shadow-sm dark:border-gray-700"
+                        >
+                          <div className="flex items-center gap-3">
+                            {getFileIcon(resource.file_type)}
+                            <span className="font-medium">{resource.file_name}</span>
+                          </div>
+                          <div className="flex gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleDownload(resource.file_url, resource.file_name)}
+                              className="text-[#895cd6] border-[#895cd6] hover:bg-[#895cd6] hover:text-white"
+                            >
+                              <Download className="w-4 h-4 mr-2" />
+                              {t.download}
+                            </Button>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-muted-foreground">{t.noModuleResources}</p>
+                    )
+                  ) : (
+                    <p className="text-muted-foreground">{t.selectModule}</p>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
           </div>
         )}
       </div>
