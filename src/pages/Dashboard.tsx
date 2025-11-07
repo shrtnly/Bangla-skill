@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import Sidebar from "@/components/Sidebar";
+import MobileMenu from "@/components/MobileMenu";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -63,6 +64,9 @@ const translations = {
     logout: "লগ আউট",
     logoutSuccess: "লগ আউট সফল হয়েছে",
     logoutError: "লগ আউট করতে সমস্যা হয়েছে",
+    Resources: "রিসোর্স",
+    Practices: "প্র্যাকটিস করুন",
+    Dashboard: "ড্যাশবোর্ড",
   },
   en: {
     myCourses: "My Courses",
@@ -86,6 +90,9 @@ const translations = {
     logout: "Logout",
     logoutSuccess: "Logout successful",
     logoutError: "Failed to logout",
+    Resources: "Resources",
+    Practices: "Practices",
+    Dashboard:"Dashboard",
   },
 };
 
@@ -211,14 +218,14 @@ const Dashboard = () => {
           </div>
 
           {/* Right controls */}
-          <div className="flex items-center gap-0">
+          <div className="flex items-center gap-2">
             
             {/* Language toggle */}
             <Button
               variant="ghost"
               size="sm"
               onClick={toggleLanguage}
-              className="gap-2 text-[#895cd6] hover:text-[#7b4dc4] hover:bg-[#895cd6]/10"
+              className="gap-0 text-[#895cd6] hover:text-[#7b4dc4] hover:bg-[#895cd6]/10"
             >
               <Languages className="h-4 w-4" />
               <span className="font-medium">{language === "bn" ? "EN" : "বাং"}</span>
@@ -231,42 +238,35 @@ const Dashboard = () => {
               onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
               className="hover:text-[#7b4dc4] hover:bg-[#895cd6]/10"
             >
-              <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0 text-[#895cd6] hover:scale-110" />
+              <Sun className="h-8 w-8 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0 text-[#895cd6] hover:scale-110" />
               <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100 text-[#895cd6] hover:scale-110" />
             </Button>
 
+            {/* Profile Avatar Dropdown - visible only on desktop */}
+<div className="hidden lg:flex">
+  <DropdownMenu>
+    <DropdownMenuTrigger asChild>
+      <Avatar className="cursor-pointer hover:ring-2 hover:ring-[#895cd6]/50 transition">
+        <AvatarImage src="/avatar.png" alt="User" />
+        <AvatarFallback>U</AvatarFallback>
+      </Avatar>
+    </DropdownMenuTrigger>
+    <DropdownMenuContent align="end" className="w-48">
+      <DropdownMenuItem onClick={() => navigate("/profile")}>
+        <User className="w-5 h-5 mr-2 text-[#895cd6]" /> {t.profile ?? "Profile"}
+      </DropdownMenuItem>
+      <DropdownMenuSeparator />
+      <DropdownMenuItem onClick={handleSignOut}>
+        <LogOut className="w-5 h-5 mr-2 text-red-500" /> {t.logout ?? "Logout"}
+      </DropdownMenuItem>
+    </DropdownMenuContent>
+  </DropdownMenu>
+</div>
+
+
             {/* Mobile Menu Trigger */}
-            <div className="lg:hidden">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="hover:text-[#7b4dc4] hover:bg-[#895cd6]/10">
-                    <Menu className="h-5 w-5 text-[#895cd6]" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-48">
-                  <DropdownMenuItem onClick={() => navigate("/dashboard")}>
-                    <BookOpen className="w-4 h-4 mr-2" />
-                    {t.myCourses}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate("/learning")}>
-                    <BookOpen className="w-4 h-4 mr-2" />
-                    {t.learning}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate("/profile")}>
-                    <User className="w-4 h-4 mr-2" />
-                    {t.myProfile}
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleSignOut}>
-                    <LogOut className="w-4 h-4 mr-2" />
-                    {t.logout}
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-
+            <MobileMenu t={t} handleSignOut={handleSignOut} />
           </div>
-
         </div>
       </header>
 
@@ -351,6 +351,7 @@ const Dashboard = () => {
                               </div>
                               <Button
                                 variant="ghost"
+                                className="hover:bg-[#7b4dc4]/10 text-white self-start px-3 py-1"
                                 size="icon"
                                 onClick={() => handleShowDetails(course)}
                               >
@@ -379,7 +380,7 @@ const Dashboard = () => {
                             {/* Actions */}
                             <div className="flex gap-2 pt-2">
                               <Button
-                                className="flex-1 bg-gradient-to-r from-[#895cd6] to-[#7b4dc4] hover:opacity-90 text-white"
+                                className="flex-1 bg-gradient-to-r from-[#7b4dc4] to-[#7b4dc4] hover:opacity-90 text-white"
                                 onClick={() =>
                                   navigate(`/learning?courseId=${course.id}`)
                                 }
