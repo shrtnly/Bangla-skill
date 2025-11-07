@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import Sidebar from "@/components/Sidebar";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -6,7 +7,6 @@ import { Badge } from "@/components/ui/badge";
 import {
   BookOpen,
   Star,
-  Clock,
   CheckCircle,
   LogOut,
   User,
@@ -17,7 +17,14 @@ import {
   Play,
   Languages,
   Menu,
+  Clock,
 } from "lucide-react";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -32,7 +39,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { CourseDetailsModal } from "@/components/CourseDetailsModal";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const translations = {
   bn: {
@@ -42,7 +48,7 @@ const translations = {
     coursesTitle: "আমার কোর্সসমূহ",
     allCourses: "সব কোর্সসমূহ",
     unfinished: "আনফিনিশড",
-    newCourse: "নতুন কোর্স",
+    newCourse: "নতুন",
     completed: "সম্পন্ন",
     modules: "মডিউল",
     hours: "ঘন্টা",
@@ -83,7 +89,7 @@ const translations = {
   },
 };
 
-  const Dashboard = () => {
+const Dashboard = () => {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
   const [profile, setProfile] = useState<any>(null);
@@ -189,7 +195,7 @@ const translations = {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-background">
+    <div className="min-h-screen min-h-screen dark:bg-gray-950 bg-gray-50">
       {/* Header */}
       <header className="border-b bg-white dark:bg-card sticky top-0 z-50 shadow-sm">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
@@ -226,7 +232,7 @@ const translations = {
               className="hover:text-[#7b4dc4] hover:bg-[#895cd6]/10"
             >
               <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0 text-[#895cd6] hover:scale-110" />
-              <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100 text-[#f5812e] hover:scale-110" />
+              <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100 text-[#895cd6] hover:scale-110" />
             </Button>
 
             {/* Mobile Menu Trigger */}
@@ -264,40 +270,16 @@ const translations = {
         </div>
       </header>
 
-      {/* Main Content */}
-      <div className="container mx-auto px-4 py-6">
-        <div className="grid lg:grid-cols-4 gap-6">
-          {/* Sidebar - Hidden on mobile, visible on large screens */}
-          <div className="lg:col-span-1 hidden lg:block">
-            <Card className="p-4 space-y-2">
-              <Button
-                variant="default"
-                className="w-full justify-start gap-3 text-base bg-[#895cd6] hover:bg-[#7b4dc4] text-white"
-              >
-                <BookOpen className="w-5 h-5" />
-                {t.myCourses}
-              </Button>
-              <Button
-                variant="ghost"
-                className="w-full justify-start gap-3 text-base hover:text-[#7b4dc4] hover:bg-[#895cd6]/10"
-                onClick={() => navigate("/learning")}
-              >
-                <BookOpen className="w-5 h-5" />
-                {t.learning}
-              </Button>
-              <Button
-                variant="ghost"
-                className="w-full justify-start gap-3 text-base hover:text-[#7b4dc4] hover:bg-[#895cd6]/10"
-                onClick={() => navigate("/profile")}
-              >
-                <User className="w-5 h-5" />
-                {t.myProfile}
-              </Button>
-            </Card>
-          </div>
 
-          {/* Courses Section */}
-          <div className="lg:col-span-3 space-y-6 lg:col-span-3 md:col-span-4 ">
+      <div className="flex">
+        
+        {/* Sidebar */}
+        <Sidebar />
+
+        {/* Main Content */}
+        <main className="flex-1 lg:ml-64 p-6 dark:bg-gray-950 bg-gray-50 transition-all duration-300">
+          <div className="max-w-7xl mx-auto">
+            {/* Courses Section */}
             <Tabs defaultValue="all" className="w-full">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-2xl font-bold text-[#895cd6]">
@@ -319,13 +301,12 @@ const translations = {
                 </TabsList>
               </div>
 
+              {/* Courses */}
               <TabsContent value="all" className="mt-0">
                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {courses.length === 0 ? (
                     <Card className="p-8 text-center col-span-full">
-                      <p className="text-muted-foreground">
-                        {t.noCoursesEnrolled}
-                      </p>
+                      <p className="text-muted-foreground">{t.noCoursesEnrolled}</p>
                       <Button onClick={() => navigate("/")} className="mt-4">
                         {t.browseCourses}
                       </Button>
@@ -347,6 +328,7 @@ const translations = {
                           className="overflow-hidden hover:shadow-lg transition-shadow"
                         >
                           <div className="p-4 space-y-3">
+                            {/* Header */}
                             <div className="flex gap-4">
                               <Badge variant="outline" className="self-start px-3 py-1">
                                 {t.modules} {modules.length}
@@ -362,8 +344,8 @@ const translations = {
                                     {t.completed}
                                   </Badge>
                                 ) : (
-                                  <Badge className="bg-gradient-to-r from-[#f5812e] to-[#e36e1f] hover:opacity-90 text-white border-0 mb-2">
-                                    {progressPercent}% {t.unfinished}
+                                  <Badge variant="outline" className="self-start px-3 py-1">
+                                    {progressPercent}%
                                   </Badge>
                                 )}
                               </div>
@@ -376,12 +358,15 @@ const translations = {
                               </Button>
                             </div>
 
+                            {/* Title */}
                             <h3 className="font-bold text-base">{course.title}</h3>
 
+                            {/* Course Info */}
                             <div className="flex items-center gap-4 text-sm text-muted-foreground">
                               <span className="flex items-center gap-1">
                                 <BookOpen className="w-4 h-4" />
-                                {modules.length} {language === "bn" ? "টি মডিউল" : "Modules"}
+                                {modules.length}{" "}
+                                {language === "bn" ? "টি মডিউল" : "Modules"}
                               </span>
                               {totalDuration > 0 && (
                                 <span className="flex items-center gap-1">
@@ -391,10 +376,13 @@ const translations = {
                               )}
                             </div>
 
+                            {/* Actions */}
                             <div className="flex gap-2 pt-2">
                               <Button
                                 className="flex-1 bg-gradient-to-r from-[#895cd6] to-[#7b4dc4] hover:opacity-90 text-white"
-                                onClick={() => navigate(`/learning?courseId=${course.id}`)}
+                                onClick={() =>
+                                  navigate(`/learning?courseId=${course.id}`)
+                                }
                               >
                                 <Play className="w-4 h-4 mr-2" />
                                 {t.start}
@@ -402,10 +390,9 @@ const translations = {
                               <Button
                                 variant="outline"
                                 className="flex-1 border-[#f5812e] text-[#f5812e] hover:bg-[#f5812e] hover:text-white"
-                                onClick={() => {
-                                  console.log("Navigating to resources with courseId:", course.id);
-                                  navigate(`/resources?courseId=${course.id}`);
-                                }} // Navigate to resources page
+                                onClick={() =>
+                                  navigate(`/resources?courseId=${course.id}`)
+                                }
                               >
                                 {t.resources}
                                 <Star className="w-4 h-4 ml-1" />
@@ -543,9 +530,8 @@ const translations = {
               </TabsContent>
             </Tabs>
           </div>
-        </div>
+        </main>
       </div>
-
       {/* Course Details Modal */}
       <CourseDetailsModal
         course={selectedCourse}

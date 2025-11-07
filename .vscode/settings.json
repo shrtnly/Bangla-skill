@@ -1,3 +1,7 @@
 {
-    "IDX.agenticWorkspace": true
+    "IDX.agenticWorkspace": true,
+    "files.associations": {
+        "*.css": "postcss"
+    },
+    "css.lint.unknownAtRules": "ignore"
 }

@@ -224,8 +224,8 @@ const Resources = () => {
           <div className="lg:col-span-1 hidden lg:block"> 
             <Card className="p-4 space-y-2">
             <Button
-                variant="default"
-                className="w-full justify-start gap-3 text-base bg-[#895cd6] hover:bg-[#7b4dc4] text-white"
+                variant="ghost"
+                className="w-full justify-start gap-2 text-gray-800 hover:text-[#7b4dc4] hover:bg-[#895cd6]/10 dark:text-white"
                 onClick={() => navigate("/learning")} 
               >
                 <BookOpen className="w-5 h-5" />
@@ -247,6 +247,14 @@ const Resources = () => {
                 <User className="w-5 h-5" />
                 আমার প্রোফাইল
               </Button>
+              <Button
+                variant="default"
+                className="w-full justify-start gap-2 text-gray-800 hover:text-[#7b4dc4] hover:bg-[#895cd6]/10 dark:text-white"
+                onClick={() => navigate("/Resources")}
+              >
+                <User className="w-5 h-5" />
+                রিসোর্স
+              </Button>
             </Card>
           </div>
 
@@ -255,13 +263,13 @@ const Resources = () => {
                 <div>
                     <Button
                     variant="ghost"
-                    onClick={() => navigate(`/learning?courseId=${courseId}`)} 
+                    onClick={() => navigate('/learning')} 
                     className="mb-2"
                     >
                     <ArrowLeft className="w-4 h-4 mr-2" />
-                    কোর্স এ ফিরে যান
+                    কোর্স তালিকায় ফিরে যান
                     </Button>
-                    <h2 className="text-2xl font-bold">{selectedCourse?.title} - {t.resources}</h2>
+                    <h2 className="text-2xl font-bold">{selectedCourse?.title}</h2>
                 </div>
             </div>
 
