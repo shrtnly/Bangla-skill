@@ -77,7 +77,7 @@ const App = () => (
               }
             />
             <Route
-              path="/resources"
+              path="/resources/:courseId"
               element={
                 <ProtectedRoute>
                   <Resources />

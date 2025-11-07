@@ -36,7 +36,7 @@ interface ProfileData {
 }
 
 const Profile = () => {
-  const { user } = useAuth();
+  const { user, signOut } = useAuth(); // Destructure signOut from useAuth
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
@@ -166,6 +166,17 @@ const Profile = () => {
     }
   };
 
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      toast.success("লগ আউট সফল হয়েছে");
+      navigate("/"); // Navigate to the landing page
+    } catch (error) {
+      console.error("Error signing out:", error);
+      toast.error("লগ আউট করতে সমস্যা হয়েছে");
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
@@ -244,6 +255,9 @@ const Profile = () => {
             </Button>
             <Button variant="outline" onClick={() => navigate("/dashboard")}>
               ড্যাশবোর্ডে ফিরে যান
+            </Button>
+            <Button variant="outline" onClick={handleLogout}>
+            লগ আউট
             </Button>
           </div>
         </div>

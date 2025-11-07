@@ -83,7 +83,7 @@ const translations = {
   },
 };
 
-const Dashboard = () => {
+  const Dashboard = () => {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
   const [profile, setProfile] = useState<any>(null);
@@ -264,8 +264,6 @@ const Dashboard = () => {
         </div>
       </header>
 
-
-
       {/* Main Content */}
       <div className="container mx-auto px-4 py-6">
         <div className="grid lg:grid-cols-4 gap-6">
@@ -404,7 +402,10 @@ const Dashboard = () => {
                               <Button
                                 variant="outline"
                                 className="flex-1 border-[#f5812e] text-[#f5812e] hover:bg-[#f5812e] hover:text-white"
-                                onClick={() => navigate(`/resources?courseId=${course.id}`)} // Navigate to resources page
+                                onClick={() => {
+                                  console.log("Navigating to resources with courseId:", course.id);
+                                  navigate(`/resources?courseId=${course.id}`);
+                                }} // Navigate to resources page
                               >
                                 {t.resources}
                                 <Star className="w-4 h-4 ml-1" />
@@ -512,7 +513,10 @@ const Dashboard = () => {
                                 <Button
                                   variant="outline"
                                   className="flex-1 border-[#f5812e] text-[#f5812e] hover:bg-[#f5812e] hover:text-white"
-                                  onClick={() => navigate(`/resources?courseId=${course.id}`)} // Navigate to resources page
+                                  onClick={() => {
+                                    console.log("Navigating to resources with courseId:", course.id);
+                                    navigate(`/resources?courseId=${course.id}`);
+                                  }} // Navigate to resources page
                                 >
                                   {t.resources}
                                   <Star className="w-4 h-4 ml-1" />

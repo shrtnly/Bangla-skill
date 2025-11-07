@@ -16,7 +16,7 @@ import {
   Loader2,
   Sun,
   Moon,
-  UserCircle2 // Changed from UserCircle to UserCircle2 for a slightly different icon, or could use just User
+  LayoutDashboard // Changed from UserCircle2 to LayoutDashboard
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -192,12 +192,12 @@ const Index = () => {
             </Button>
             {user ? (
               <Button
-                variant="ghost" // Use ghost variant to remove background on hover
-                size="icon"
-                onClick={() => navigate("/profile")}
+                variant="ghost"
+                onClick={() => navigate("/dashboard")}
+                className="flex items-center gap-2 px-3 py-2 text-sm font-medium hover:bg-[#e4792d] dark:hover:bg-[#e4792d] rounded-md"
               >
-                <UserCircle2 className="h-6 w-6" />
-                <span className="sr-only">Profile</span>
+                <LayoutDashboard className="h-5 w-5" />
+                ড্যাশবোর্ড
               </Button>
             ) : (
               <Button onClick={() => navigate("/auth")} className="btn-hero">

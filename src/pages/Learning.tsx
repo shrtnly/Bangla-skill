@@ -255,6 +255,10 @@ const Learning = () => {
     navigate(`/learning?courseId=${courseId}`);
   };
 
+  const handleViewResources = (courseId: string) => {
+    navigate(`/resources/${courseId}`);
+  };
+
   const handleSignOut = async () => {
     try {
       await signOut();
@@ -319,19 +323,7 @@ const Learning = () => {
             <span className="text-xl font-bold text-[#895cd6]">Learn</span>
           </div>
           <div className="flex items-center gap-0">
-          {/* Language toggle 
-          <Button
-              variant="ghost"
-              size="sm"
-              onClick={toggleLanguage}
-              className="gap-2 text-[#895cd6] hover:text-[#7b4dc4] hover:bg-[#895cd6]/10"
-            >
-              <Languages className="h-4 w-4" />
-              <span className="font-medium">{language === "bn" ? "EN" : "বাং"}</span>
-            </Button>
-
-            */}
-            
+         
              {/* Theme toggle */}
             <Button
               variant="ghost"
@@ -495,7 +487,11 @@ const Learning = () => {
                           >
                             STUDY PLAN
                           </Button>
-                          <Button variant="outline" className="flex-1 border-[#f5812e] text-[#f5812e] hover:bg-[#f5812e] hover:text-white">
+                          <Button 
+                            variant="outline" 
+                            className="flex-1 border-[#f5812e] text-[#f5812e] hover:bg-[#f5812e] hover:text-white"
+                            onClick={() => handleViewResources(course.id)}
+                          >
                             রিসোর্স
                             <Star className="w-4 h-4 ml-1" />
                           </Button>
@@ -565,7 +561,11 @@ const Learning = () => {
                           >
                             STUDY PLAN
                           </Button>
-                          <Button variant="outline" className="flex-1 border-[#f5812e] text-[#f5812e] hover:bg-[#f5812e] hover:text-white">
+                          <Button 
+                            variant="outline" 
+                            className="flex-1 border-[#f5812e] text-[#f5812e] hover:bg-[#f5812e] hover:text-white"
+                            onClick={() => handleViewResources(course.id)}
+                          >
                             রিসোর্স
                             <Star className="w-4 h-4 ml-1" />
                           </Button>
