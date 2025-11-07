@@ -319,6 +319,7 @@ const Learning = () => {
             <span className="text-xl font-bold text-[#895cd6]">Learn</span>
           </div>
           <div className="flex items-center gap-0">
+          {/* Language toggle 
           <Button
               variant="ghost"
               size="sm"
@@ -328,6 +329,10 @@ const Learning = () => {
               <Languages className="h-4 w-4" />
               <span className="font-medium">{language === "bn" ? "EN" : "বাং"}</span>
             </Button>
+
+            */}
+            
+             {/* Theme toggle */}
             <Button
               variant="ghost"
               size="icon"
