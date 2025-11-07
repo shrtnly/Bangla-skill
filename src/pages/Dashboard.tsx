@@ -16,6 +16,7 @@ import {
   Sun,
   Play,
   Languages,
+  Menu,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -71,7 +72,7 @@ const translations = {
     start: "Start",
     continue: "Continue",
     resources: "Resources",
-    noCoursesEnrolled: "You haven't enrolled in any courses yet",
+    noCoursesEnrolled: "You haven\'t enrolled in any courses yet",
     browseCourses: "Browse Courses",
     noUnfinished: "No unfinished courses",
     profile: "Profile",
@@ -200,11 +201,12 @@ const Dashboard = () => {
             <div className="w-10 h-10 rounded-full bg-[#895cd6] flex items-center justify-center text-white font-bold text-lg">
               O
             </div>
-            <span className="text-xl font-bold text-[#895cd6]">Ostad</span>
+            <span className="text-xl font-bold text-[#895cd6]">Learn</span>
           </div>
 
           {/* Right controls */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-0">
+            
             {/* Language toggle */}
             <Button
               variant="ghost"
@@ -227,43 +229,48 @@ const Dashboard = () => {
               <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100 text-[#f5812e] hover:scale-110" />
             </Button>
 
-            {/* Profile dropdown */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="link" size="icon" className="relative">
-                  <Avatar className="h-9 w-9">
-                    <AvatarImage src={profile?.avatar_url || ""} />
-                    <AvatarFallback className="bg-[#895cd6] text-white">
-                      {userStats.name.charAt(0)}
-                    </AvatarFallback>
-                  </Avatar>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
-                <DropdownMenuItem onClick={() => navigate("/profile")}>
-                  <User className="w-4 h-4 mr-2" />
-                  {t.profile}
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <Settings className="w-4 h-4 mr-2" />
-                  {t.settings}
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleSignOut}>
-                  <LogOut className="w-4 h-4 mr-2" />
-                  {t.logout}
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            {/* Mobile Menu Trigger */}
+            <div className="lg:hidden">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="hover:text-[#7b4dc4] hover:bg-[#895cd6]/10">
+                    <Menu className="h-5 w-5 text-[#895cd6]" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuItem onClick={() => navigate("/dashboard")}>
+                    <BookOpen className="w-4 h-4 mr-2" />
+                    {t.myCourses}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate("/learning")}>
+                    <BookOpen className="w-4 h-4 mr-2" />
+                    {t.learning}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate("/profile")}>
+                    <User className="w-4 h-4 mr-2" />
+                    {t.myProfile}
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleSignOut}>
+                    <LogOut className="w-4 h-4 mr-2" />
+                    {t.logout}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+
           </div>
+
         </div>
       </header>
+
+
 
       {/* Main Content */}
       <div className="container mx-auto px-4 py-6">
         <div className="grid lg:grid-cols-4 gap-6">
-          {/* Sidebar */}
-          <div className="lg:col-span-1">
+          {/* Sidebar - Hidden on mobile, visible on large screens */}
+          <div className="lg:col-span-1 hidden lg:block">
             <Card className="p-4 space-y-2">
               <Button
                 variant="default"
@@ -274,7 +281,7 @@ const Dashboard = () => {
               </Button>
               <Button
                 variant="ghost"
-                className="w-full justify-start gap-2 text-white hover:text-[#7b4dc4] hover:bg-[#895cd6]/10"
+                className="w-full justify-start gap-3 text-base hover:text-[#7b4dc4] hover:bg-[#895cd6]/10"
                 onClick={() => navigate("/learning")}
               >
                 <BookOpen className="w-5 h-5" />
@@ -292,7 +299,7 @@ const Dashboard = () => {
           </div>
 
           {/* Courses Section */}
-          <div className="lg:col-span-3 space-y-6">
+          <div className="lg:col-span-3 space-y-6 lg:col-span-3 md:col-span-4 ">
             <Tabs defaultValue="all" className="w-full">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-2xl font-bold text-[#895cd6]">

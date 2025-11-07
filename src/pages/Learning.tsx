@@ -3,17 +3,24 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { BookOpen, CheckCircle, Lock, ChevronRight, Play, ArrowLeft, Trophy, Star, Loader2, Clock, Award, Moon, Sun, User } from "lucide-react";
+import { BookOpen, CheckCircle, Lock, ChevronRight, Play, ArrowLeft, Trophy, Star, Loader2, Clock, Award, Moon, Sun, User, Menu, LogOut, Languages } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { useTheme } from "@/hooks/useTheme";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const Learning = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const { theme, setTheme } = useTheme();
   const [searchParams] = useState(() => new URLSearchParams(window.location.search));
 
@@ -28,6 +35,7 @@ const Learning = () => {
   const [courseProgress, setCourseProgress] = useState<Record<string, any>>({});
   const [courseModules, setCourseModules] = useState<Record<string, any[]>>({});
   const [viewMode, setViewMode] = useState<'list' | 'modules'>('list');
+  const [language, setLanguage] = useState("bn"); // Assuming initial language is Bengali
 
   useEffect(() => {
     if (user) {
@@ -247,6 +255,29 @@ const Learning = () => {
     navigate(`/learning?courseId=${courseId}`);
   };
 
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      navigate("/");
+    } catch (error) {
+      console.error("Error signing out:", error);
+      toast.error("সাইন আউট করতে সমস্যা হয়েছে");
+    }
+  };
+
+  const toggleLanguage = () => {
+    setLanguage((prev) => (prev === "bn" ? "en" : "bn"));
+    // Here you would typically also update a context or global state for language
+  };
+
+  // Placeholder for translation object (t)
+  const t = {
+    myCourses: "আমার কোর্স",
+    learning: "শিখন",
+    myProfile: "আমার প্রোফাইল",
+    logout: "লগআউট",
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -285,23 +316,64 @@ const Learning = () => {
             <div className="w-10 h-10 rounded-full bg-[#895cd6] flex items-center justify-center text-white font-bold text-lg">
               O
             </div>
-            <span className="text-xl font-bold text-[#895cd6]">Ostad</span>
+            <span className="text-xl font-bold text-[#895cd6]">Learn</span>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-0">
+          <Button
+              variant="ghost"
+              size="sm"
+              onClick={toggleLanguage}
+              className="gap-2 text-[#895cd6] hover:text-[#7b4dc4] hover:bg-[#895cd6]/10"
+            >
+              <Languages className="h-4 w-4" />
+              <span className="font-medium">{language === "bn" ? "EN" : "বাং"}</span>
+            </Button>
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}>
-              <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0 text-[#895cd6]" />
-              <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100 text-[#f5812e]" />
+              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+              className="hover:text-[#7b4dc4] hover:bg-[#895cd6]/10"
+            >
+              <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0 text-[#895cd6] hover:scale-110" />
+              <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100 text-[#f5812e] hover:scale-110" />
             </Button>
+            {/* Mobile menu trigger */}
+            <div className="lg:hidden">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="hover:text-[#7b4dc4] hover:bg-[#895cd6]/10">
+                    <Menu className="h-5 w-5 text-[#895cd6]" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuItem onClick={() => navigate("/dashboard")}>
+                    <BookOpen className="w-4 h-4 mr-2" />
+                    {t.myCourses}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate("/learning")}>
+                    <BookOpen className="w-4 h-4 mr-2" />
+                    {t.learning}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate("/profile")}>
+                    <User className="w-4 h-4 mr-2" />
+                    {t.myProfile}
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleSignOut}>
+                    <LogOut className="w-4 h-4 mr-2" />
+                    {t.logout}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+
           </div>
         </div>
       </header>
 
       <div className="container mx-auto px-4 py-6">
         <div className="grid lg:grid-cols-4 gap-6">
-          <div className="lg:col-span-1">
+          <div className="lg:col-span-1 hidden lg:block"> {/* Hide on small screens */}
             <Card className="p-4 space-y-2">
             <Button
                 variant="default"
@@ -312,7 +384,7 @@ const Learning = () => {
               </Button>
               <Button
                 variant="ghost"
-                className="w-full justify-start gap-2 text-white hover:text-[#7b4dc4] hover:bg-[#895cd6]/10"
+                className="w-full justify-start gap-2 text-gray-800 hover:text-[#7b4dc4] hover:bg-[#895cd6]/10 dark:text-white"
                 onClick={() => navigate("/Dashboard")}
               >
                 <User className="w-5 h-5" />
@@ -320,7 +392,7 @@ const Learning = () => {
               </Button>
               <Button
                 variant="ghost"
-                className="w-full justify-start gap-2 text-white hover:text-[#7b4dc4] hover:bg-[#895cd6]/10"
+                className="w-full justify-start gap-2 text-gray-800 hover:text-[#7b4dc4] hover:bg-[#895cd6]/10 dark:text-white"
                 onClick={() => navigate("/profile")}
               >
                 <User className="w-5 h-5" />
