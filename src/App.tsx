@@ -14,6 +14,7 @@ import NotFound from "./pages/NotFound";
 import Chapter from "./pages/Chapter";
 import Practice from "./pages/Practice";
 import Quiz from "./pages/Quiz";
+import Resources from "./pages/Resources"; // Import the new Resources component
 
 const queryClient = new QueryClient();
 
@@ -72,6 +73,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <Quiz />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/resources"
+              element={
+                <ProtectedRoute>
+                  <Resources />
                 </ProtectedRoute>
               }
             />

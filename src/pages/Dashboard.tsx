@@ -404,6 +404,7 @@ const Dashboard = () => {
                               <Button
                                 variant="outline"
                                 className="flex-1 border-[#f5812e] text-[#f5812e] hover:bg-[#f5812e] hover:text-white"
+                                onClick={() => navigate(`/resources?courseId=${course.id}`)} // Navigate to resources page
                               >
                                 {t.resources}
                                 <Star className="w-4 h-4 ml-1" />
@@ -511,6 +512,7 @@ const Dashboard = () => {
                                 <Button
                                   variant="outline"
                                   className="flex-1 border-[#f5812e] text-[#f5812e] hover:bg-[#f5812e] hover:text-white"
+                                  onClick={() => navigate(`/resources?courseId=${course.id}`)} // Navigate to resources page
                                 >
                                   {t.resources}
                                   <Star className="w-4 h-4 ml-1" />
