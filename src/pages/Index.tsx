@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useTheme } from "@/hooks/useTheme";
+import { motion } from "framer-motion";
 import {
   BookOpen,
   Award,
@@ -178,7 +179,7 @@ const Index = () => {
             <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-primary to-primary-glow flex items-center justify-center">
               <BookOpen className="w-6 h-6 text-white" />
             </div>
-            <span className="text-xl font-bold">শিক্ষা প্ল্যাটফর্ম</span>
+            <span className="text-xl font-bold">প্ল্যাটফর্ম</span>
           </div>
           <div className="flex items-center gap-3">
             <Button
@@ -209,13 +210,27 @@ const Index = () => {
       </header>
 
       {/* Hero Section */}
-      <section className="container mx-auto px-4 py-10 lg:py-32 text-center">
+
+      <section className="container mx-auto px-4 py-10 lg:py-32 text-center overflow-x-hidden">
+      <motion.div
+        animate={{
+          y: [0, -0, 0, 0, 0], // up and down movement
+          rotate: [-9, 0, -9],    // subtle rotation
+        }}
+        transition={{
+          duration: 5,             // full cycle duration
+          repeat: Infinity,        // loop forever
+          ease: "easeInOut",
+        }}
+      >
         <Badge className="bg-accent/10 text-accent border-accent/20 hover:bg-accent/20">
-        সময় কম, আগ্রহ বেশি?
+          সময় কম, আগ্রহ বেশি?
         </Badge>
-        <h1 className="text-4xl md:text-6xl font-bold leading-snug mt-6">
+      </motion.div>
+
+        <h1 className="text-4xl md:text-6xl font-bold leading-snug mt-4">
   সহজে ও বিনা মূল্যে{" "}
-  <span className="block bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+  <span className="block bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent leading-normal">
     দক্ষ হওয়ার আকর্ষণীয় পদ্ধতি!
   </span>
 </h1>
@@ -229,7 +244,7 @@ const Index = () => {
             className="btn-hero text-lg"
             onClick={() => navigate("/auth")}
           >
-            শুরু করুন
+            শিখতে শুরু করুন
             <ArrowRight className="ml-2 w-5 h-5" />
           </Button>
          
@@ -238,6 +253,8 @@ const Index = () => {
             কোর্স দেখুন
           </Button>
        */}
+
+
 </div>
 </section>
 

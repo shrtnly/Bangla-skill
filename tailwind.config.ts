@@ -99,6 +99,10 @@ export default {
           "0%, 100%": { transform: "translateY(0)" },
           "50%": { transform: "translateY(-5px)" },
         },
+        "badge-hero-animation": {
+          "0%": { opacity: "0", transform: "translateY(20px) rotate(-5deg)" },
+          "100%": { opacity: "1", transform: "translateY(0) rotate(0deg)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -107,6 +111,7 @@ export default {
         "scale-in": "scale-in 0.3s ease-out",
         "slide-up": "slide-up 0.5s ease-out",
         "bounce-subtle": "bounce-subtle 2s ease-in-out infinite",
+        "badge-hero-animation": "badge-hero-animation 0.7s ease-out forwards",
       },
     },
   },
