@@ -27,7 +27,7 @@ const MobileMenu = ({ t, handleSignOut }) => {
             size="icon"
             className="hover:text-[#7b4dc4] hover:bg-[#895cd6]/10"
           >
-            <Menu className="h-5 w-5 text-[#895cd6]" />
+            <Menu className="h-6 w-6 text-[#895cd6]" />
           </Button>
         </DropdownMenuTrigger>
 
@@ -38,36 +38,36 @@ const MobileMenu = ({ t, handleSignOut }) => {
           
           
           <DropdownMenuItem onClick={() => navigate("/Dashboard")}>
-            <BookOpen className="w-4 h-4 mr-2 text-[#895cd6]" />
+            <BookOpen className="w-5 h-5 mr-2 text-[#895cd6]" />
             {t.myCourses}
           </DropdownMenuItem>
 
           <DropdownMenuItem onClick={() => navigate("/learning")}>
-            <BookOpen className="w-4 h-4 mr-2 text-[#895cd6]" />
+            <BookOpen className="w-5 h-5 mr-2 text-[#895cd6]" />
             {t.learning}
           </DropdownMenuItem>
 
           <DropdownMenuItem onClick={() => navigate("/Resources")}>
-            <BookOpen className="w-4 h-4 mr-2 text-[#895cd6]" />
+            <BookOpen className="w-5 h-5 mr-2 text-[#895cd6]" />
             {t.Resources}
           </DropdownMenuItem>
 
 
           <DropdownMenuItem onClick={() => navigate("/Resources")}>
-            <BookOpen className="w-4 h-4 mr-2 text-[#895cd6]" />
+            <BookOpen className="w-5 h-5 mr-2 text-[#895cd6]" />
             {t.Practices}
           </DropdownMenuItem>
 
 
           <DropdownMenuItem onClick={() => navigate("/profile")}>
-            <User className="w-4 h-4 mr-2 text-[#895cd6]" />
+            <User className="w-5 h-5 mr-2 text-[#895cd6]" />
             {t.myProfile}
           </DropdownMenuItem>
 
           <DropdownMenuSeparator />
 
           <DropdownMenuItem onClick={handleSignOut}>
-            <LogOut className="w-4 h-4 mr-2 text-red-500" />
+            <LogOut className="w-5 h-5 mr-2 text-red-500" />
             {t.logout}
           </DropdownMenuItem>
         </DropdownMenuContent>

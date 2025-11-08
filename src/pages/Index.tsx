@@ -211,17 +211,17 @@ const Index = () => {
       {/* Hero Section */}
       <section className="container mx-auto px-4 py-10 lg:py-32 text-center">
         <Badge className="bg-accent/10 text-accent border-accent/20 hover:bg-accent/20">
-          বাংলায় সেরা শিক্ষা প্ল্যাটফর্ম
+        সময় কম, আগ্রহ বেশি?
         </Badge>
-        <h1 className="text-4xl md:text-6xl font-bold leading-tight mt-6">
-          আপনার স্বপ্নের ক্যারিয়ার{" "}
-          <span className="block bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-            শুরু হোক এখানে
-          </span>
-        </h1>
+        <h1 className="text-4xl md:text-6xl font-bold leading-snug mt-6">
+  সহজে ও বিনা মূল্যে{" "}
+  <span className="block bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+    দক্ষ হওয়ার আকর্ষণীয় পদ্ধতি!
+  </span>
+</h1>
+
         <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mt-4">
-          বিশ্বমানের শিক্ষা এখন বাংলায়। আপনার পছন্দের বিষয়ে দক্ষতা অর্জন করুন এবং
-          পেশাদার সার্টিফিকেট পান।
+        শিখুন যখন খুশি, যেখানে খুশি — সহজ, মজার এবং কার্যকর উপায়ে।
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center mt-8">
           <Button
@@ -229,17 +229,20 @@ const Index = () => {
             className="btn-hero text-lg"
             onClick={() => navigate("/auth")}
           >
-            বিনামূল্যে শুরু করুন
+            শুরু করুন
             <ArrowRight className="ml-2 w-5 h-5" />
           </Button>
+         
+         {/*
           <Button size="lg" variant="outline" className="text-lg">
             কোর্স দেখুন
           </Button>
-        </div>
-      </section>
+       */}
+</div>
+</section>
 
       {/* Featured Courses */}
-      <section className="container mx-auto px-4 py-20">
+      <section className="container mx-auto px-4 py-8">
         <div className="text-center mb-12">
           <h2 className="text-3xl md:text-4xl font-bold mb-4">
             জনপ্রিয় কোর্সসমূহ

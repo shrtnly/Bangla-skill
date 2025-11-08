@@ -107,6 +107,7 @@ const Dashboard = () => {
   const [selectedCourse, setSelectedCourse] = useState<any>(null);
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
   const [language, setLanguage] = useState<"bn" | "en">("bn");
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false); // New state for sidebar collapse
 
   const t = translations[language];
 
@@ -201,6 +202,11 @@ const Dashboard = () => {
     setLanguage((prev) => (prev === "bn" ? "en" : "bn"));
   };
 
+  // Handler for sidebar collapse change
+  const handleSidebarCollapseChange = (collapsed: boolean) => {
+    setIsSidebarCollapsed(collapsed);
+  };
+
   return (
     <div className="min-h-screen min-h-screen dark:bg-gray-950 bg-gray-50">
       {/* Header */}
@@ -211,14 +217,14 @@ const Dashboard = () => {
             className="flex items-center gap-2 cursor-pointer"
             onClick={() => navigate("/")}
           >
-            <div className="w-10 h-10 rounded-full bg-[#895cd6] flex items-center justify-center text-white font-bold text-lg">
+            <div className="w-12 h-12 rounded-full bg-[#895cd6] flex items-center justify-center text-white font-bold text-xl">
               O
             </div>
-            <span className="text-xl font-bold text-[#895cd6]">Learn</span>
+            <span className="text-2xl font-bold text-[#895cd6]">Learn</span>
           </div>
 
           {/* Right controls */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-0">
             
             {/* Language toggle */}
             <Button
@@ -227,7 +233,7 @@ const Dashboard = () => {
               onClick={toggleLanguage}
               className="gap-0 text-[#895cd6] hover:text-[#7b4dc4] hover:bg-[#895cd6]/10"
             >
-              <Languages className="h-4 w-4" />
+              <Languages className="h-8 w-8" />
               <span className="font-medium">{language === "bn" ? "EN" : "বাং"}</span>
             </Button>
 
@@ -238,26 +244,26 @@ const Dashboard = () => {
               onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
               className="hover:text-[#7b4dc4] hover:bg-[#895cd6]/10"
             >
-              <Sun className="h-8 w-8 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0 text-[#895cd6] hover:scale-110" />
-              <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100 text-[#895cd6] hover:scale-110" />
+              <Sun className="h-10 w-10 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0 text-[#895cd6] hover:scale-110" />
+              <Moon className="absolute h-8 w-8 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100 text-[#895cd6] hover:scale-110" />
             </Button>
 
             {/* Profile Avatar Dropdown - visible only on desktop */}
 <div className="hidden lg:flex">
   <DropdownMenu>
     <DropdownMenuTrigger asChild>
-      <Avatar className="cursor-pointer hover:ring-2 hover:ring-[#895cd6]/50 transition">
+      <Avatar className="cursor-pointer hover:ring-2 hover:ring-[#895cd6]/50 transition w-12 h-12">
         <AvatarImage src="/avatar.png" alt="User" />
         <AvatarFallback>U</AvatarFallback>
       </Avatar>
     </DropdownMenuTrigger>
     <DropdownMenuContent align="end" className="w-48">
       <DropdownMenuItem onClick={() => navigate("/profile")}>
-        <User className="w-5 h-5 mr-2 text-[#895cd6]" /> {t.profile ?? "Profile"}
+        <User className="w-6 h-6 mr-2 text-[#895cd6]" /> {t.profile ?? "Profile"}
       </DropdownMenuItem>
       <DropdownMenuSeparator />
       <DropdownMenuItem onClick={handleSignOut}>
-        <LogOut className="w-5 h-5 mr-2 text-red-500" /> {t.logout ?? "Logout"}
+        <LogOut className="w-6 h-6 mr-2 text-red-500" /> {t.logout ?? "Logout"}
       </DropdownMenuItem>
     </DropdownMenuContent>
   </DropdownMenu>
@@ -274,10 +280,10 @@ const Dashboard = () => {
       <div className="flex">
         
         {/* Sidebar */}
-        <Sidebar />
+        <Sidebar onCollapseChange={handleSidebarCollapseChange} />
 
         {/* Main Content */}
-        <main className="flex-1 lg:ml-64 p-6 dark:bg-gray-950 bg-gray-50 transition-all duration-300">
+        <main className={`flex-1 p-6 dark:bg-gray-950 bg-gray-50 transition-all duration-300 ${isSidebarCollapsed ? 'lg:ml-20' : 'lg:ml-64'}`}>
           <div className="max-w-7xl mx-auto">
             {/* Courses Section */}
             <Tabs defaultValue="all" className="w-full">

@@ -13,6 +13,10 @@ export default {
       },
     },
     extend: {
+      spacing: {
+        '30': '7.5rem', // Adding custom spacing for h-30 and w-30 (30 * 0.25rem = 7.5rem)
+        '80': '20rem', // Adding a much larger custom spacing
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",

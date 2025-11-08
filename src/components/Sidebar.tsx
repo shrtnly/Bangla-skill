@@ -9,12 +9,24 @@ import {
   ChevronLeft,
   ChevronRight,
   Sparkles,
+  SquareDashedMousePointer,
+  Send,
 } from "lucide-react";
 
-const Sidebar = () => {
+interface SidebarProps {
+  onCollapseChange: (collapsed: boolean) => void;
+}
+
+const Sidebar: React.FC<SidebarProps> = ({ onCollapseChange }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [collapsed, setCollapsed] = useState(false);
+
+  const handleCollapseToggle = () => {
+    const newCollapsedState = !collapsed;
+    setCollapsed(newCollapsedState);
+    onCollapseChange(newCollapsedState);
+  };
 
   const isActive = (path: string) => location.pathname === path;
 
@@ -22,7 +34,8 @@ const Sidebar = () => {
     { label: "ড্যাশবোর্ড", path: "/Dashboard", icon: LayoutDashboard },
     { label: "আমার কোর্স", path: "/Learning", icon: BookOpen },
     { label: "রিসোর্স", path: "/Resources", icon: FileText },
-    { label: "প্র্যাকটিস করুন", path: "/Resources", icon: FileText },
+    { label: "প্র্যাকটিস করুন", path: "/Practices", icon: SquareDashedMousePointer  },
+    { label: "প্র্যাকটিস করুন", path: "/Communication", icon: Send },
   ];
 
   return (
@@ -37,7 +50,7 @@ const Sidebar = () => {
           {!collapsed && <span className="font-bold text-xl">GayanGo</span>}
         </div>
         <button
-          onClick={() => setCollapsed(!collapsed)}
+          onClick={handleCollapseToggle}
           className="p-2 rounded-md hover:bg-[#7b4dc4]/50 transition"
         >
           {collapsed ? (
