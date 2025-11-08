@@ -236,7 +236,7 @@ const Index = () => {
 </h1>
 
         <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mt-4">
-        শিখুন যখন খুশি, যেখানে খুশি — সহজ, মজার এবং কার্যকর উপায়ে।
+        শিখতে থাকুন যখন খুশি, যেখানে খুশি — সহজ, মজার এবং কার্যকর উপায়ে।
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center mt-8">
           <Button
