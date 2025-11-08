@@ -262,10 +262,10 @@ const Index = () => {
       <section className="container mx-auto px-4 py-8">
         <div className="text-center mb-12">
           <h2 className="text-3xl md:text-4xl font-bold mb-4">
-            জনপ্রিয় কোর্সসমূহ
+          পছন্দের বিষয় যুক্ত করুন
           </h2>
           <p className="text-muted-foreground text-lg">
-            আপনার ক্যারিয়ারের জন্য সেরা কোর্স বেছে নিন
+          নিজের শেখার তালিকায় পছন্দের প্রোগ্রাম যোগ করুন এবং শেখা শুরু করুন।
           </p>
         </div>
 
@@ -325,7 +325,7 @@ const Index = () => {
                     }}
                     className="w-full bg-primary text-white hover:bg-primary/90 font-medium"
                   >
-                    ভর্তি হন
+                    যুক্ত করুন
                   </Button>
                 </div>
               </Card>
