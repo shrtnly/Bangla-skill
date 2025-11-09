@@ -42,7 +42,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onCollapseChange }) => {
 
   return (
     <aside
-      className={`hidden lg:flex flex-col fixed top-0 left-0 h-screen bg-white text-gray-900 border-r border-gray-200 transition-all duration-300 z-[51]
+      className={`hidden lg:flex flex-col fixed top-1 left-0 h-screen bg-white text-gray-900 border-r border-gray-200 transition-all duration-300 z-[51]
         dark:bg-[#212127] dark:text-white dark:border-[#2d2d35]
         ${collapsed ? "w-20" : "w-64"}`}
     >
@@ -85,14 +85,16 @@ const Sidebar: React.FC<SidebarProps> = ({ onCollapseChange }) => {
         ))}
       </nav>
 
-      {/* Footer Section */}
+      {/* Footer Section 
       <div className="absolute bottom-0 left-0 w-full border-t border-gray-200 dark:border-[#7b4dc4]/20 p-4 flex items-center justify-center">
         {collapsed ? (
           <User className="w-5 h-5 text-gray-900 dark:text-white" />
         ) : (
-          <span className="text-sm text-gray-700 dark:text-white/70">""</span>
+          <span className="text-sm text-gray-700 dark:text-white/70">"profile"</span>
         )}
       </div>
+      */}
+
     </aside>
   );
 };
