@@ -210,7 +210,7 @@ const Dashboard = () => {
   return (
     <div className="min-h-screen min-h-screen dark:bg-gray-950 bg-gray-50">
       {/* Header */}
-      <header className="border-b bg-white dark:bg-card sticky top-0 z-50 shadow-sm">
+      <header className="border-b bg-white dark:bg-card sticky top-[-2px] z-50 shadow-sm">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
           {/* Logo */}
           <div

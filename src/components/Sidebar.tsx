@@ -12,6 +12,7 @@ import {
   SquareDashedMousePointer,
   Send,
 } from "lucide-react";
+import { useTheme } from "@/hooks/useTheme"; // Import useTheme
 
 interface SidebarProps {
   onCollapseChange: (collapsed: boolean) => void;
@@ -21,6 +22,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onCollapseChange }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [collapsed, setCollapsed] = useState(false);
+  const { theme } = useTheme(); // Use the theme hook
 
   const handleCollapseToggle = () => {
     const newCollapsedState = !collapsed;
@@ -40,23 +42,24 @@ const Sidebar: React.FC<SidebarProps> = ({ onCollapseChange }) => {
 
   return (
     <aside
-      className={`hidden lg:flex flex-col fixed top-0 left-0 h-screen bg-[#212127] text-white border-r border-[#212127] transition-all duration-300 z-40
+      className={`hidden lg:flex flex-col fixed top-0 left-0 h-screen bg-white text-gray-900 border-r border-gray-200 transition-all duration-300 z-[51]
+        dark:bg-[#212127] dark:text-white dark:border-[#2d2d35]
         ${collapsed ? "w-20" : "w-64"}`}
     >
       {/* Logo + Collapse Button */}
-      <div className="flex items-center justify-between px-4 py-4 border-b border-[#2d2d35]">
-        <div className="flex items-center gap-2">
-          <Sparkles className="w-6 h-6 text-white" />
+      <div className="flex items-center justify-between px-4 py-4 border-b border-gray-200 dark:border-[#2d2d35]">
+        <div className="flex items-center gap-2 cursor-pointer">
+          <Sparkles className="w-6 h-6 text-gray-900 dark:text-white" />
           {!collapsed && <span className="font-bold text-xl">GayanGo</span>}
         </div>
         <button
           onClick={handleCollapseToggle}
-          className="p-2 rounded-md hover:bg-[#7b4dc4]/50 transition"
+          className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-[#7b4dc4]/50 transition"
         >
           {collapsed ? (
-            <ChevronRight className="w-5 h-5 text-white" />
+            <ChevronRight className="w-5 h-5 text-gray-900 dark:text-white" />
           ) : (
-            <ChevronLeft className="w-5 h-5 text-white" />
+            <ChevronLeft className="w-5 h-5 text-gray-900 dark:text-white" />
           )}
         </button>
       </div>
@@ -71,8 +74,8 @@ const Sidebar: React.FC<SidebarProps> = ({ onCollapseChange }) => {
             className={`flex items-center gap-3 w-full justify-start text-base font-medium rounded-xl transition-all duration-200
               ${
                 isActive(path)
-                  ? "bg-[#7b4dc4]/25 text-white"
-                  : "text-white/90 hover:bg-[#7b4dc4]/20 hover:text-white"
+                  ? "bg-purple-100 text-purple-800 dark:bg-[#7b4dc4]/25 dark:text-white"
+                  : "text-gray-700 hover:bg-gray-100 dark:text-white/90 dark:hover:bg-[#7b4dc4]/20"
               } ${collapsed ? "justify-center" : "px-4 py-3"}
             `}
           >
@@ -83,11 +86,11 @@ const Sidebar: React.FC<SidebarProps> = ({ onCollapseChange }) => {
       </nav>
 
       {/* Footer Section */}
-      <div className="absolute bottom-0 left-0 w-full border-t border-[#7b4dc4]/20 p-4 flex items-center justify-center">
+      <div className="absolute bottom-0 left-0 w-full border-t border-gray-200 dark:border-[#7b4dc4]/20 p-4 flex items-center justify-center">
         {collapsed ? (
-          <User className="w-5 h-5 text-white" />
+          <User className="w-5 h-5 text-gray-900 dark:text-white" />
         ) : (
-          <span className="text-sm text-white/70">""</span>
+          <span className="text-sm text-gray-700 dark:text-white/70">""</span>
         )}
       </div>
     </aside>
