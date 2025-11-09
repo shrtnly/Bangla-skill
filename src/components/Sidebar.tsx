@@ -35,12 +35,12 @@ const Sidebar: React.FC<SidebarProps> = ({ onCollapseChange }) => {
     { label: "আমার কোর্স", path: "/Learning", icon: BookOpen },
     { label: "রিসোর্স", path: "/Resources", icon: FileText },
     { label: "প্র্যাকটিস করুন", path: "/Practices", icon: SquareDashedMousePointer  },
-    { label: "প্র্যাকটিস করুন", path: "/Communication", icon: Send },
+    { label: "যোগাযোগ", path: "/Communication", icon: Send },
   ];
 
   return (
     <aside
-      className={`hidden lg:flex flex-col fixed top-18 left-0 h-screen bg-[#212127] text-white border-r border-[#212127] transition-all duration-300 z-40
+      className={`hidden lg:flex flex-col fixed top-0 left-0 h-screen bg-[#212127] text-white border-r border-[#212127] transition-all duration-300 z-40
         ${collapsed ? "w-20" : "w-64"}`}
     >
       {/* Logo + Collapse Button */}
