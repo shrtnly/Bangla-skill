@@ -211,20 +211,11 @@ const Dashboard = () => {
     <div className="min-h-screen min-h-screen dark:bg-gray-950 bg-gray-50">
       {/* Header */}
       <header className="border-b bg-white dark:bg-card sticky top-[-2px] z-50 shadow-sm">
-        <div className="container mx-auto px-4 py-3 flex items-center justify-between">
-          {/* Logo */}
-          <div
-            className="flex items-center gap-2 cursor-pointer"
-            onClick={() => navigate("/")}
-          >
-            <div className="w-12 h-12 rounded-full bg-[#895cd6] flex items-center justify-center text-white font-bold text-xl">
-              O
-            </div>
-            <span className="text-2xl font-bold text-[#895cd6]">Learn</span>
-          </div>
+        <div className="container mx-auto px-4 py-3 flex items-left justify-between">
+          
 
           {/* Right controls */}
-          <div className="flex items-center gap-0">
+          <div className="flex items-left gap-0">
             
             {/* Language toggle */}
             <Button
