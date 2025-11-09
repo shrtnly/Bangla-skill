@@ -210,16 +210,11 @@ const Dashboard = () => {
   return (
     <div className="min-h-screen min-h-screen dark:bg-gray-950 bg-gray-50">
       {/* Header */}
-      <header className="border-b bg-white dark:bg-card sticky top-[-1px] z-50 shadow-sm">
-        <div className={`w-full px-4 py-3 flex items-center justify-between transition-all duration-300 ${isSidebarCollapsed ? 'lg:ml-20' : 'lg:ml-64'}`}>
-          {/* Mobile Menu Trigger - visible only on mobile */}
-          <div className="lg:hidden">
-            <MobileMenu t={t} handleSignOut={handleSignOut} />
-          </div>
-
+      <header className="border-b bg-white dark:bg-card sticky top-[-2px] z-50 shadow-sm">
+        <div className="container mx-auto px-4 py-3 flex items-center justify-between">
           {/* Logo */}
           <div
-            className="flex items-center gap-2 cursor-pointer lg:hidden"
+            className="flex items-center gap-2 cursor-pointer"
             onClick={() => navigate("/")}
           >
             <div className="w-12 h-12 rounded-full bg-[#895cd6] flex items-center justify-center text-white font-bold text-xl">
@@ -254,25 +249,29 @@ const Dashboard = () => {
             </Button>
 
             {/* Profile Avatar Dropdown - visible only on desktop */}
-            <div className="hidden lg:flex">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Avatar className="cursor-pointer hover:ring-2 hover:ring-[#895cd6]/50 transition w-12 h-12">
-                    <AvatarImage src="/avatar.png" alt="User" />
-                    <AvatarFallback>U</AvatarFallback>
-                  </Avatar>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-48">
-                  <DropdownMenuItem onClick={() => navigate("/profile")}>
-                    <User className="w-6 h-6 mr-2 text-[#895cd6]" /> {t.profile ?? "Profile"}
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleSignOut}>
-                    <LogOut className="w-6 h-6 mr-2 text-red-500" /> {t.logout ?? "Logout"}
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
+<div className="hidden lg:flex">
+  <DropdownMenu>
+    <DropdownMenuTrigger asChild>
+      <Avatar className="cursor-pointer hover:ring-2 hover:ring-[#895cd6]/50 transition w-12 h-12">
+        <AvatarImage src="/avatar.png" alt="User" />
+        <AvatarFallback>U</AvatarFallback>
+      </Avatar>
+    </DropdownMenuTrigger>
+    <DropdownMenuContent align="end" className="w-48">
+      <DropdownMenuItem onClick={() => navigate("/profile")}>
+        <User className="w-6 h-6 mr-2 text-[#895cd6]" /> {t.profile ?? "Profile"}
+      </DropdownMenuItem>
+      <DropdownMenuSeparator />
+      <DropdownMenuItem onClick={handleSignOut}>
+        <LogOut className="w-6 h-6 mr-2 text-red-500" /> {t.logout ?? "Logout"}
+      </DropdownMenuItem>
+    </DropdownMenuContent>
+  </DropdownMenu>
+</div>
+
+
+            {/* Mobile Menu Trigger */}
+            <MobileMenu t={t} handleSignOut={handleSignOut} />
           </div>
         </div>
       </header>
