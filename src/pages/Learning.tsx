@@ -259,7 +259,7 @@ const Learning = () => {
   };
 
   const handleViewResources = (courseId: string) => {
-    navigate(`/resources/${courseId}`);
+    navigate(`/Resources/${courseId}`);
   };
 
   const handleSignOut = async () => {

@@ -401,7 +401,7 @@ const Dashboard = () => {
                                   navigate(`/resources?courseId=${course.id}`)
                                 }
                               >
-                                {t.resources}
+                                {t.Resources}
                                 <Star className="w-4 h-4 ml-1" />
                               </Button>
                             </div>
@@ -508,7 +508,7 @@ const Dashboard = () => {
                                   variant="outline"
                                   className="flex-1 border-[#f5812e] text-[#f5812e] hover:bg-[#f5812e] hover:text-white"
                                   onClick={() => {
-                                    console.log("Navigating to resources with courseId:", course.id);
+                                    console.log("Navigating to Resources with courseId:", course.id);
                                     navigate(`/resources?courseId=${course.id}`);
                                   }} // Navigate to resources page
                                 >
