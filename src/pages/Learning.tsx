@@ -38,7 +38,7 @@ const Learning = () => {
   const [courseModules, setCourseModules] = useState<Record<string, any[]>>({});
   const [viewMode, setViewMode] = useState<'list' | 'modules'>('list');
   const [language, setLanguage] = useState("bn"); // Assuming initial language is Bengali
-    const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false); // New state for sidebar collapse
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false); // New state for sidebar collapse
 
   useEffect(() => {
     if (user) {

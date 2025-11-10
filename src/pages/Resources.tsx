@@ -29,26 +29,25 @@ const Resources = () => {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
   const { theme, setTheme } = useTheme();
-  const [searchParams, setSearchParams] = useSearchParams(); // Use setSearchParams to update URL
-  const courseId = searchParams.get("courseId"); // Get courseId from query params
+  const [searchParams, setSearchParams] = useSearchParams();
+  const courseId = searchParams.get("courseId");
 
   const [loading, setLoading] = useState(true);
-  const [selectedModuleId, setSelectedModuleId] = useState<string | null>("all"); // Default to "all"
+  const [selectedModuleId, setSelectedModuleId] = useState<string | null>("all");
   const [modules, setModules] = useState<any[]>([]);
   const [groupedResources, setGroupedResources] = useState<Record<string, any[]>>({});
   const [selectedCourse, setSelectedCourse] = useState<any>(null);
-  const [enrolledCourses, setEnrolledCourses] = useState<any[]>([]); // State for enrolled courses
-  const [refreshTrigger, setRefreshTrigger] = useState(0); // Used to re-fetch data
+  const [enrolledCourses, setEnrolledCourses] = useState<any[]>([]);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
+  // 1. Effect to fetch enrolled courses ONLY when user changes
   useEffect(() => {
-    const fetchData = async () => {
+    const getEnrolledCourses = async () => {
       if (!user) {
         setEnrolledCourses([]);
         return;
       }
-
       try {
-        // Fetch enrolled courses
         const { data: enrollmentsData, error: enrollmentsError } = await supabase
             .from("enrollments")
             .select(`*, courses (*)`)
@@ -57,41 +56,63 @@ const Resources = () => {
         if (enrollmentsError) throw enrollmentsError;
         const courses = enrollmentsData?.map(enrollment => enrollment.courses) || [];
         setEnrolledCourses(courses);
-
-        // Set default courseId if none is in URL and courses are available
-        if (!courseId && courses.length > 0) {
-            setSearchParams({ courseId: courses[0].id }, { replace: true }); // Use replace to avoid extra history entries
-            return; // Exit to let the URL change trigger next effects
-        }
-
-        if (courseId) {
-          fetchCourseDetails(courseId);
-          fetchModules(courseId);
-        }
-
       } catch (error: any) {
-          console.error("Error in initial data fetch:", error.message);
-          toast.error("ডেটা লোড করতে সমস্যা হয়েছে");
+          console.error("Error fetching enrolled courses:", error.message);
+          toast.error("ভর্তি হওয়া কোর্স লোড করতে সমস্যা হয়েছে");
       }
     };
 
-    fetchData();
-  }, [user, courseId, refreshTrigger, setSearchParams]); // Dependencies for this combined effect
+    getEnrolledCourses();
+  }, [user]); // Dependency: user
 
+  // 2. Effect to set default courseId in URL if none exists, and fetch course/module/resource data
   useEffect(() => {
-    if (courseId) {
-      fetchResources(courseId, selectedModuleId); // Pass courseId and selectedModuleId
-    } else {
-      setGroupedResources({}); // Clear resources if no course is selected
-      setLoading(false);
-    }
-  }, [selectedModuleId, refreshTrigger, courseId]);
+    const fetchDataForCourse = async () => {
+      if (!user) {
+        setLoading(false);
+        return;
+      }
+
+      // Set default courseId if none is in URL and enrolledCourses are available
+      if (!courseId && enrolledCourses.length > 0) {
+          setSearchParams({ courseId: enrolledCourses[0].id }, { replace: true });
+          return; // Exit here, as changing search params will trigger this effect again with the new courseId
+      }
+
+      // If a courseId is present (either from URL or defaulted), fetch data
+      if (courseId) {
+        setLoading(true);
+        try {
+          await fetchCourseDetails(courseId);
+          await fetchModules(courseId);
+          await fetchResources(courseId, selectedModuleId);
+        } catch (error) {
+          console.error("Error in fetchDataForCourse:", error);
+          toast.error("কোর্স ডেটা লোড করতে সমস্যা হয়েছে");
+        } finally {
+          setLoading(false);
+        }
+      } else if (enrolledCourses.length === 0 && !loading) { // Only set loading false if no courses and not already loading
+        // No courseId and no enrolled courses, so nothing to display
+        setSelectedCourse(null);
+        setModules([]);
+        setGroupedResources({});
+        setLoading(false);
+      } else if (!courseId && enrolledCourses.length === 0 && user) {
+        // User is logged in, no courseId, but enrolledCourses are still empty (e.g., fetching or genuinely empty)
+        // Keep loading true as we might be waiting for enrolledCourses to populate
+        setLoading(true);
+      }
+    };
+
+    fetchDataForCourse();
+  }, [courseId, enrolledCourses, selectedModuleId, user, setSearchParams, refreshTrigger]); // Dependencies: courseId, enrolledCourses, selectedModuleId, user, setSearchParams, refreshTrigger
 
   const fetchCourseDetails = async (courseId: string) => {
     try {
       const { data, error } = await supabase
         .from("courses")
-        .select("id, title") // Only select necessary fields
+        .select("id, title")
         .eq("id", courseId)
         .single();
 
@@ -107,13 +128,12 @@ const Resources = () => {
     try {
       const { data: modulesData, error: modulesError } = await supabase
         .from("modules")
-        .select("id, title, order_index") // Only select necessary fields
+        .select("id, title, order_index")
         .eq("course_id", courseId)
         .order("order_index");
 
       if (modulesError) throw modulesError;
       setModules(modulesData || []);
-
     } catch (error: any) {
       console.error("Error fetching modules:", error.message);
       toast.error("মডিউল লোড করতে সমস্যা হয়েছে");
@@ -127,8 +147,6 @@ const Resources = () => {
             .from("resources")
             .select("id, title, description, url, file_type, mime_type, module_id");
 
-        let targetModuleIds: string[] = [];
-
         if (currentModuleId === "all") {
             const { data: modulesInCourse, error: modulesError } = await supabase
                 .from("modules")
@@ -136,10 +154,10 @@ const Resources = () => {
                 .eq("course_id", currentCourseId);
 
             if (modulesError) throw modulesError;
-            targetModuleIds = modulesInCourse?.map(module => module.id) || [];
+            const moduleIds = modulesInCourse?.map(module => module.id) || [];
 
-            if (targetModuleIds.length > 0) {
-                resourcesQuery = resourcesQuery.in("module_id", targetModuleIds);
+            if (moduleIds.length > 0) {
+                resourcesQuery = resourcesQuery.in("module_id", moduleIds);
             } else {
                 setGroupedResources({});
                 setLoading(false);
@@ -186,14 +204,12 @@ const Resources = () => {
     }
   };
 
-  // Callback function for when a resource is successfully uploaded
   const handleResourceUploaded = () => {
-    setRefreshTrigger(prev => prev + 1); // Increment to trigger re-fetch in useEffects
+    setRefreshTrigger(prev => prev + 1);
   };
 
-  // Helper to get an icon based on file_type
   const getFileIcon = (fileType: string) => {
-    const lowerCaseFileType = fileType.toLowerCase(); // Convert to lowercase
+    const lowerCaseFileType = fileType.toLowerCase();
     switch (lowerCaseFileType) {
       case 'pdf': return <FileText className="w-5 h-5 text-red-500 flex-shrink-0" />;
       case 'image': return <Image className="w-5 h-5 text-blue-500 flex-shrink-0" />;
@@ -206,12 +222,10 @@ const Resources = () => {
     }
   };
 
-  // Determine if a resource type is downloadable
   const isDownloadable = (fileType: string) => {
-    return ['pdf', 'docx', 'xlsx', 'image', 'video', 'audio', 'text', 'other'].includes(fileType.toLowerCase()); // Convert to lowercase
+    return ['pdf', 'docx', 'xlsx', 'image', 'video', 'audio', 'text', 'other'].includes(fileType.toLowerCase());
   };
 
-  // Placeholder for translation object (t)
   const t = {
     myCourses: "আমার কোর্স",
     learning: "শিখন",
@@ -222,11 +236,12 @@ const Resources = () => {
     noResources: "এই মডিউলে কোনো রিসোর্স নেই",
     view: "দেখুন",
     download: "ডাউনলোড করুন",
-    allModules: "সব মডিউল", // New translation key
-    courses: "কোর্সসমূহ", // New translation key
+    allModules: "সব মডিউল",
+    courses: "কোর্সসমূহ",
+    enrollInCourse: "Please enroll in a course to view resources.",
+    noResourcesForCourse: "There are no resources available for this course."
   };
 
-  // Prepare modules for rendering, ensuring "All Modules" is handled correctly
   const modulesToRender = selectedModuleId === "all" ? modules : modules.filter(m => m.id === selectedModuleId);
 
   return (
@@ -374,16 +389,36 @@ const Resources = () => {
             </div>
 
             <div className="space-y-4">
-                {Object.keys(groupedResources).length === 0 && selectedModuleId !== "all" && !loading ? (
+                {/* Conditional rendering for various loading and empty states */}
+                {loading ? (
+                    <Card className="p-12 text-center">
+                        <Loader2 className="w-12 h-12 mx-auto text-primary animate-spin mb-4" />
+                        <p className="text-muted-foreground">Loading resources...</p>
+                    </Card>
+                ) : (!user) ? (
                     <Card className="p-12 text-center">
                         <BookOpen className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-                        <p className="text-muted-foreground">{t.noResources}</p>
+                        <p className="text-muted-foreground">Please log in to view resources.</p>
                     </Card>
-                ) : ( 
+                ) : (enrolledCourses.length === 0) ? (
+                    <Card className="p-12 text-center">
+                        <BookOpen className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+                        <p className="text-muted-foreground">{t.enrollInCourse}</p>
+                    </Card>
+                ) : (!courseId) ? (
+                    <Card className="p-12 text-center">
+                        <BookOpen className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+                        <p className="text-muted-foreground">Please select a course to view resources.</p>
+                    </Card>
+                ) : (Object.keys(groupedResources).length === 0 && modules.length === 0) ? (
+                    <Card className="p-12 text-center">
+                        <BookOpen className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+                        <p className="text-muted-foreground">{t.noResourcesForCourse}</p>
+                    </Card>
+                ) : (
                     modulesToRender.map((module) => {
                         const moduleResources = groupedResources[module.id] || [];
-                        // Only render module cards if they have resources or if "All Modules" is selected
-                        if (moduleResources.length === 0 && selectedModuleId !== "all") return null;
+                        if (selectedModuleId !== "all" && moduleResources.length === 0) return null;
                         
                         return (
                             <Card key={module.id} className="p-4 space-y-4">
@@ -433,7 +468,7 @@ const Resources = () => {
             </div>
 
             {/* Integrate the ResourceUploader component here */}
-            {selectedModuleId && user && (
+            {selectedModuleId && user && courseId && (
                 <>
                     <Separator className="my-6" />
                     <ResourceUploader moduleId={selectedModuleId !== "all" ? selectedModuleId : null} onResourceUploaded={handleResourceUploaded} />
