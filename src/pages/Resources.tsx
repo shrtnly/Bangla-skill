@@ -6,6 +6,7 @@ import { BookOpen, ChevronRight, ArrowLeft, Loader2, Moon, Sun, User, Menu, LogO
 import { useNavigate, useSearchParams } from "react-router-dom"; // Use setSearchParams to update URL
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import Sidebar from "@/components/Sidebar";
 import { toast } from "sonner";
 import { useTheme } from "@/hooks/useTheme";
 import {
@@ -24,6 +25,7 @@ import {
 } from "@/components/ui/select";
 import ResourceUploader from "@/components/ResourceUploader"; // Import the new uploader component
 import { Separator } from "@/components/ui/separator"; // For visual separation
+import { Avatar, AvatarImage, AvatarFallback } from "@radix-ui/react-avatar";
 
 const Resources = () => {
   const navigate = useNavigate();
@@ -39,6 +41,7 @@ const Resources = () => {
   const [selectedCourse, setSelectedCourse] = useState<any>(null);
   const [enrolledCourses, setEnrolledCourses] = useState<any[]>([]);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false); // New state for sidebar collapse
 
   // 1. Effect to fetch enrolled courses ONLY when user changes
   useEffect(() => {
@@ -242,101 +245,97 @@ const Resources = () => {
     noResourcesForCourse: "There are no resources available for this course."
   };
 
+    // Handler for sidebar collapse change
+    const handleSidebarCollapseChange = (collapsed: boolean) => {
+      setIsSidebarCollapsed(collapsed);
+    };
+
   const modulesToRender = selectedModuleId === "all" ? modules : modules.filter(m => m.id === selectedModuleId);
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-background">
-      <header className="border-b bg-white dark:bg-card sticky top-0 z-50 shadow-sm">
-        <div className="container mx-auto px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate("/")}>
-            <div className="w-10 h-10 rounded-full bg-[#895cd6] flex items-center justify-center text-white font-bold text-lg">
-              O
-            </div>
-            <span className="text-xl font-bold text-[#895cd6]">Learn</span>
+    <header className="border-b bg-white dark:bg-card sticky top-0 z-50 shadow-sm">
+      <div className="container mx-auto px-4 py-3 flex items-center justify-between">
+        <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate("/")}>
+          <div className="w-10 h-10 rounded-full bg-[#895cd6] flex items-center justify-center text-white font-bold text-lg">
+            O
           </div>
-          <div className="flex items-center gap-0">
-             {/* Theme toggle */}
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-              className="hover:text-[#7b4dc4] hover:bg-[#895cd6]/10"
-            >
-              <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0 text-[#895cd6] hover:scale-110" />
-              <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100 text-[#f5812e] hover:scale-110" />
-            </Button>
-            {/* Mobile menu trigger */}
-            <div className="lg:hidden">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="hover:text-[#7b4dc4] hover:bg-[#895cd6]/10">
-                    <Menu className="h-5 w-5 text-[#895cd6]" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-48">
-                  <DropdownMenuItem onClick={() => navigate("/dashboard")}>
-                    <BookOpen className="w-4 h-4 mr-2" />
-                    {t.myCourses}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate("/learning")}>
-                    <BookOpen className="w-4 h-4 mr-2" />
-                    {t.learning}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate("/profile")}>
-                    <User className="w-4 h-4 mr-2" />
-                    {t.myProfile}
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleSignOut}>
-                    <LogOut className="w-4 h-4 mr-2" />
-                    {t.logout}
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-          </div>
+          <span className="text-xl font-bold text-[#895cd6]"></span>
         </div>
-      </header>
+        <div className="flex items-center gap-0">
+       
+           {/* Theme toggle 
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+            className="hover:text-[#7b4dc4] hover:bg-[#895cd6]/10"
+          >
+            <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0 text-[#895cd6] hover:scale-110" />
+            <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100 text-[#f5812e] hover:scale-110" />
+          </Button>
+*/}
+          {/* Profile Avatar Dropdown - visible only on desktop */}
+          <div className="hidden lg:flex">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Avatar className="cursor-pointer w-12 h-12">
+                  <AvatarImage src={user?.user_metadata?.avatar_url || "/placeholder-avatar.jpg"} alt="User" />
+                  <AvatarFallback>{user?.email ? user.email[0].toUpperCase() : "U"}</AvatarFallback>
+                </Avatar>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuItem onClick={() => navigate("/profile")}>
+                  <User className="w-6 h-6 mr-2 text-[#895cd6]" /> {t.myProfile ?? "Profile"}
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleSignOut}>
+                  <LogOut className="w-6 h-6 mr-2 text-red-500" /> {t.logout ?? "Logout"}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
 
+          {/* Mobile menu trigger */}
+          <div className="lg:hidden">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="hover:text-[#7b4dc4] hover:bg-[#895cd6]/10">
+                  <Menu className="h-5 w-5 text-[#895cd6]" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuItem onClick={() => navigate("/dashboard")}>
+                  <BookOpen className="w-4 h-4 mr-2" />
+                  {t.myCourses}
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate("/learning")}>
+                  <BookOpen className="w-4 h-4 mr-2" />
+                  {t.learning}
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate("/profile")}>
+                  <User className="w-4 h-4 mr-2" />
+                  {t.myProfile}
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleSignOut}>
+                  <LogOut className="w-4 h-4 mr-2" />
+                  {t.logout}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+
+        </div>
+      </div>
+    </header>
+
+
+        {/* Sidebar */}
+        <Sidebar onCollapseChange={handleSidebarCollapseChange} />
+<main className={`flex-1 p-6 dark:bg-gray-950 bg-gray-50 transition-all duration-300 ${isSidebarCollapsed ? 'lg:ml-20' : 'lg:ml-64'}`}>
       <div className="container mx-auto px-4 py-6">
         <div className="grid lg:grid-cols-4 gap-6">
-          <div className="lg:col-span-1 hidden lg:block"> 
-            <Card className="p-4 space-y-2">
-            <Button
-                variant="ghost"
-                className="w-full justify-start gap-2 text-gray-800 hover:text-[#7b4dc4] hover:bg-[#895cd6]/10 dark:text-white"
-                onClick={() => navigate("/learning")} 
-              >
-                <BookOpen className="w-5 h-5" />
-                আমার কোর্স
-              </Button>
-              <Button
-                variant="ghost"
-                className="w-full justify-start gap-2 text-gray-800 hover:text-[#7b4dc4] hover:bg-[#895cd6]/10 dark:text-white"
-                onClick={() => navigate("/dashboard")}
-              >
-                <User className="w-5 h-5" />
-                ড্যাশবোর্ড
-              </Button>
-              <Button
-                variant="ghost"
-                className="w-full justify-start gap-2 text-gray-800 hover:text-[#7b4dc4] hover:bg-[#895cd6]/10 dark:text-white"
-                onClick={() => navigate("/profile")}
-              >
-                <User className="w-5 h-5" />
-                আমার প্রোফাইল
-              </Button>
-              <Button
-                variant="default"
-                className="w-full justify-start gap-2 text-gray-800 hover:text-[#7b4dc4] hover:bg-[#895cd6]/10 dark:text-white"
-                onClick={() => navigate(`/resources?courseId=${courseId}`)} 
-              >
-                <User className="w-5 h-5" />
-                রিসোর্স
-              </Button>
-            </Card>
-          </div>
-
           <div className="lg:col-span-3 space-y-6">
             <div className="flex items-center justify-between">
                 <div>
@@ -477,8 +476,8 @@ const Resources = () => {
           </div>
         </div>
       </div>
+      </main>
     </div>
   );
 };
-
 export default Resources;
