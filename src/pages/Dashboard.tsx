@@ -220,7 +220,7 @@ const Dashboard = () => {
             <div className="w-12 h-12 rounded-full bg-[#895cd6] flex items-center justify-center text-white font-bold text-xl">
               O
             </div>
-            <span className="text-2xl font-bold text-[#895cd6]">Learn</span>
+            <span className="text-2xl font-bold text-[#895cd6]"></span>
           </div>
 
           {/* Right controls */}
