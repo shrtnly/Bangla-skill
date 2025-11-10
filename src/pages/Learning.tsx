@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
+import Sidebar from "@/components/Sidebar";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
@@ -17,6 +18,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarImage, AvatarFallback } from "@radix-ui/react-avatar";
 
 const Learning = () => {
   const navigate = useNavigate();
@@ -36,6 +38,7 @@ const Learning = () => {
   const [courseModules, setCourseModules] = useState<Record<string, any[]>>({});
   const [viewMode, setViewMode] = useState<'list' | 'modules'>('list');
   const [language, setLanguage] = useState("bn"); // Assuming initial language is Bengali
+    const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false); // New state for sidebar collapse
 
   useEffect(() => {
     if (user) {
@@ -282,6 +285,11 @@ const Learning = () => {
     logout: "লগআউট",
   };
 
+    // Handler for sidebar collapse change
+    const handleSidebarCollapseChange = (collapsed: boolean) => {
+      setIsSidebarCollapsed(collapsed);
+    };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -334,6 +342,28 @@ const Learning = () => {
               <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0 text-[#895cd6] hover:scale-110" />
               <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100 text-[#f5812e] hover:scale-110" />
             </Button>
+
+ {/* Profile Avatar Dropdown - visible only on desktop */}
+<div className="hidden lg:flex">
+  <DropdownMenu>
+    <DropdownMenuTrigger asChild>
+      <Avatar className="cursor-pointer hover:ring-2 hover:ring-[#895cd6]/50 transition w-12 h-12">
+        <AvatarImage src="/avatar.png" alt="User" />
+        <AvatarFallback>U</AvatarFallback>
+      </Avatar>
+    </DropdownMenuTrigger>
+    <DropdownMenuContent align="end" className="w-48">
+      <DropdownMenuItem onClick={() => navigate("/profile")}>
+        <User className="w-6 h-6 mr-2 text-[#895cd6]" /> {t.myProfile ?? "Profile"}
+      </DropdownMenuItem>
+      <DropdownMenuSeparator />
+      <DropdownMenuItem onClick={handleSignOut}>
+        <LogOut className="w-6 h-6 mr-2 text-red-500" /> {t.logout ?? "Logout"}
+      </DropdownMenuItem>
+    </DropdownMenuContent>
+  </DropdownMenu>
+</div>
+
             {/* Mobile menu trigger */}
             <div className="lg:hidden">
               <DropdownMenu>
@@ -367,37 +397,11 @@ const Learning = () => {
           </div>
         </div>
       </header>
+       
+        {/* Sidebar */}
+        <Sidebar onCollapseChange={handleSidebarCollapseChange} />
 
-      <div className="container mx-auto px-4 py-6">
-        <div className="grid lg:grid-cols-4 gap-6">
-          <div className="lg:col-span-1 hidden lg:block"> {/* Hide on small screens */}
-            <Card className="p-4 space-y-2">
-            <Button
-                variant="default"
-                className="w-full justify-start gap-3 text-base bg-[#895cd6] hover:bg-[#7b4dc4] text-white"
-              >
-                <BookOpen className="w-5 h-5" />
-                আমার কোর্স
-              </Button>
-              <Button
-                variant="ghost"
-                className="w-full justify-start gap-2 text-gray-800 hover:text-[#7b4dc4] hover:bg-[#895cd6]/10 dark:text-white"
-                onClick={() => navigate("/Dashboard")}
-              >
-                <User className="w-5 h-5" />
-                ড্যাশবোর্ড
-              </Button>
-              <Button
-                variant="ghost"
-                className="w-full justify-start gap-2 text-gray-800 hover:text-[#7b4dc4] hover:bg-[#895cd6]/10 dark:text-white"
-                onClick={() => navigate("/profile")}
-              >
-                <User className="w-5 h-5" />
-                আমার প্রোফাইল
-              </Button>
-            </Card>
-          </div>
-
+          <main className={`flex-1 p-6 dark:bg-gray-950 bg-gray-50 transition-all duration-300 ${isSidebarCollapsed ? 'lg:ml-20' : 'lg:ml-64'}`}>
           <div className="lg:col-span-3 space-y-6">
             {viewMode === 'list' && (
               <Tabs defaultValue="all" className="w-full">
@@ -520,11 +524,9 @@ const Learning = () => {
                           className="w-full h-48 object-cover"
                         />
                         <div className="absolute top-3 left-3">
-                          {
-                            <Badge className="bg-gradient-to-r from-[#f5812e] to-[#e36e1f] hover:opacity-90 text-white border-0">
-                              {progressPercent}% আনফিনিশড
-                            </Badge>
-                          }
+                          <Badge className="bg-gradient-to-r from-[#f5812e] to-[#e36e1f] hover:opacity-90 text-white border-0">
+                            {progressPercent}% আনফিনিশড
+                          </Badge>
                         </div>
                       </div>
 
@@ -731,9 +733,9 @@ const Learning = () => {
               </>
             )}
           </div>
+          </main>
         </div>
-      </div>
-    </div>
+    
   );
 };
 
