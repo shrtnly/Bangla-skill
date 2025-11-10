@@ -18,7 +18,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarImage, AvatarFallback } from "@radix-ui/react-avatar";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 const Learning = () => {
   const navigate = useNavigate();
@@ -328,11 +328,11 @@ const Learning = () => {
             <div className="w-10 h-10 rounded-full bg-[#895cd6] flex items-center justify-center text-white font-bold text-lg">
               O
             </div>
-            <span className="text-xl font-bold text-[#895cd6]">Learn</span>
+            <span className="text-xl font-bold text-[#895cd6]"></span>
           </div>
           <div className="flex items-center gap-0">
          
-             {/* Theme toggle */}
+             {/* Theme toggle 
             <Button
               variant="ghost"
               size="icon"
@@ -342,27 +342,27 @@ const Learning = () => {
               <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0 text-[#895cd6] hover:scale-110" />
               <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100 text-[#f5812e] hover:scale-110" />
             </Button>
-
- {/* Profile Avatar Dropdown - visible only on desktop */}
-<div className="hidden lg:flex">
-  <DropdownMenu>
-    <DropdownMenuTrigger asChild>
-      <Avatar className="cursor-pointer hover:ring-2 hover:ring-[#895cd6]/50 transition w-12 h-12">
-        <AvatarImage src="/avatar.png" alt="User" />
-        <AvatarFallback>U</AvatarFallback>
-      </Avatar>
-    </DropdownMenuTrigger>
-    <DropdownMenuContent align="end" className="w-48">
-      <DropdownMenuItem onClick={() => navigate("/profile")}>
-        <User className="w-6 h-6 mr-2 text-[#895cd6]" /> {t.myProfile ?? "Profile"}
-      </DropdownMenuItem>
-      <DropdownMenuSeparator />
-      <DropdownMenuItem onClick={handleSignOut}>
-        <LogOut className="w-6 h-6 mr-2 text-red-500" /> {t.logout ?? "Logout"}
-      </DropdownMenuItem>
-    </DropdownMenuContent>
-  </DropdownMenu>
-</div>
+*/}
+            {/* Profile Avatar Dropdown - visible only on desktop */}
+            <div className="hidden lg:flex">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Avatar className="cursor-pointer w-12 h-12">
+                    <AvatarImage src={user?.user_metadata?.avatar_url || "/placeholder-avatar.jpg"} alt="User" />
+                    <AvatarFallback>{user?.email ? user.email[0].toUpperCase() : "U"}</AvatarFallback>
+                  </Avatar>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuItem onClick={() => navigate("/profile")}>
+                    <User className="w-6 h-6 mr-2 text-[#895cd6]" /> {t.myProfile ?? "Profile"}
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleSignOut}>
+                    <LogOut className="w-6 h-6 mr-2 text-red-500" /> {t.logout ?? "Logout"}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
 
             {/* Mobile menu trigger */}
             <div className="lg:hidden">
@@ -489,7 +489,7 @@ const Learning = () => {
                             className="flex-1 bg-gradient-to-r from-[#895cd6] to-[#7b4dc4] hover:opacity-90 text-white"
                             onClick={() => handleViewCourseModules(course.id)}
                           >
-                            STUDY PLAN
+                            লার্নিং প্ল্যান
                           </Button>
                           <Button 
                             variant="outline" 
