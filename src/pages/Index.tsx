@@ -186,16 +186,17 @@ const Index = () => {
               variant="ghost"
               size="icon"
               onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+              className="hover:text-[#7b4dc4] hover:bg-[#895cd6]/10"
             >
               <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0 text-[#895cd6]" />
-              <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+              <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100 text-[#895cd6]" />
               <span className="sr-only">Toggle theme</span>
             </Button>
             {user ? (
               <Button
                 variant="ghost"
                 onClick={() => navigate("/dashboard")}
-                className="flex items-center gap-2 px-3 py-2 text-sm font-medium hover:bg-[#e4792d] dark:hover:bg-[#e4792d] rounded-md"
+                className="hover:text-[#7b4dc4] hover:bg-[#895cd6]/10 text-[#895cd6]"
               >
                 <LayoutDashboard className="h-5 w-5" />
                 ড্যাশবোর্ড
@@ -218,7 +219,7 @@ const Index = () => {
           backgroundImage: `url(/${theme === "dark" ? "Hero_Dark.webp" : "Hero_Light.webp"})`
         }}
       >
-      <div className="absolute inset-0 bg-black opacity-50"></div>
+      <div className="absolute inset-0 bg-black opacity-0"></div>
       <motion.div
         animate={{
           y: [0, -0, 0, 0, 0], // up and down movement
@@ -237,9 +238,14 @@ const Index = () => {
 
         <h1 className="text-4xl md:text-6xl font-bold leading-snug mt-4 relative z-10 text-white">
   সহজে ও বিনা মূল্যে{" "}
-  <span className="block bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent leading-normal">
-    দক্ষ হওয়ার আকর্ষণীয় পদ্ধতি!
-  </span>
+  <span
+  className="block bg-clip-text text-transparent leading-normal"
+  style={{
+    backgroundImage: "linear-gradient(to right, #cf278d, #956dda)"
+  }}
+>
+  দক্ষ হওয়ার আকর্ষণীয় পদ্ধতি!
+</span>
 </h1>
 
         <p className="text-lg md:text-xl text-white opacity-90 max-w-2xl mx-auto mt-4 relative z-10">
