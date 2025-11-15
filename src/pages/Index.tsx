@@ -212,7 +212,12 @@ const Index = () => {
 
       {/* Hero Section */}
 
-      <section className="container mx-auto px-4 py-10 lg:py-32 text-center overflow-x-hidden relative bg-hero-image bg-cover bg-center">
+      <section
+        className="container mx-auto px-4 py-10 lg:py-32 text-center overflow-x-hidden relative bg-cover bg-center"
+        style={{
+          backgroundImage: `url(/${theme === "dark" ? "Hero_Dark.webp" : "Hero_Light.webp"})`
+        }}
+      >
       <div className="absolute inset-0 bg-black opacity-50"></div>
       <motion.div
         animate={{
