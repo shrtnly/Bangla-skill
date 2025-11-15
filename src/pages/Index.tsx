@@ -201,7 +201,8 @@ const Index = () => {
                 ড্যাশবোর্ড
               </Button>
             ) : (
-              <Button onClick={() => navigate("/auth")} className="btn-hero">
+              <Button onClick={() => navigate("/auth")}
+               className="btn-hero">
                 লগইন করুন
               </Button>
             )}
@@ -211,7 +212,8 @@ const Index = () => {
 
       {/* Hero Section */}
 
-      <section className="container mx-auto px-4 py-10 lg:py-32 text-center overflow-x-hidden">
+      <section className="container mx-auto px-4 py-10 lg:py-32 text-center overflow-x-hidden relative bg-hero-image bg-cover bg-center">
+      <div className="absolute inset-0 bg-black opacity-50"></div>
       <motion.div
         animate={{
           y: [0, -0, 0, 0, 0], // up and down movement
@@ -223,22 +225,22 @@ const Index = () => {
           ease: "easeInOut",
         }}
       >
-        <Badge className="bg-accent/10 text-accent border-accent/20 hover:bg-accent/20">
+        <Badge className="bg-accent/10 text-accent border-accent/20 hover:bg-accent/20 relative z-10">
           সময় কম, আগ্রহ বেশি?
         </Badge>
       </motion.div>
 
-        <h1 className="text-4xl md:text-6xl font-bold leading-snug mt-4">
+        <h1 className="text-4xl md:text-6xl font-bold leading-snug mt-4 relative z-10 text-white">
   সহজে ও বিনা মূল্যে{" "}
   <span className="block bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent leading-normal">
     দক্ষ হওয়ার আকর্ষণীয় পদ্ধতি!
   </span>
 </h1>
 
-        <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mt-4">
+        <p className="text-lg md:text-xl text-white opacity-90 max-w-2xl mx-auto mt-4 relative z-10">
         শিখতে থাকুন যখন খুশি, যেখানে খুশি — সহজ, মজার এবং কার্যকর উপায়ে।
         </p>
-        <div className="flex flex-col sm:flex-row gap-4 justify-center mt-8">
+        <div className="flex flex-col sm:flex-row gap-4 justify-center mt-8 relative z-10">
           <Button
             size="lg"
             className="btn-hero text-lg"

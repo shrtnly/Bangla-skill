@@ -166,4 +166,9 @@
   .progress-fill {
     @apply transition-all duration-500 ease-out;
   }
+
+  /* Hero image */
+  .bg-hero-image {
+    background-image: url('/HeroSection.webp');
+  }
 }
