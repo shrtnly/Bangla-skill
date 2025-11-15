@@ -14,7 +14,8 @@ import NotFound from "./pages/NotFound";
 import Chapter from "./pages/Chapter";
 import Practice from "./pages/Practice";
 import Quiz from "./pages/Quiz";
-import Resources from "./pages/Resources"; // Import the new Resources component
+import Resources from "./pages/Resources";
+import Communication from "./pages/Communication"; // Import the new Communication component
 
 const queryClient = new QueryClient();
 
@@ -81,6 +82,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <Resources/>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/communication"
+              element={
+                <ProtectedRoute>
+                  <Communication/>
                 </ProtectedRoute>
               }
             />
